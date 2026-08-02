@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Timetable Management Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <!-- Main Navigation Header -->
+    <header>
+        <h1>University Timetable Automation System</h1>
+        <div class="nav-links">
+            <button id="nav-dashboard-btn" class="hidden">Dashboard</button>
+            <button id="nav-crud-btn" class="hidden">CRUD Entities</button>
+            <button id="nav-timetable-btn" class="hidden">Timetable Grid</button>
+            <button id="nav-rules-btn" class="hidden">Rules Builder</button>
+            <button id="nav-logout-btn" class="hidden">Logout</button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 1. LANDING & LOGIN PAGE -->
+        <section id="view-landing" class="view-section">
+            <div class="card" style="max-width: 800px; margin: 4rem auto; text-align: center;">
+                <h2 style="font-size: 2.25rem; margin-bottom: 1rem;">University Timetable Automation System</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                    AI-Powered University Timetable Scheduler
+                </p>
+                <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 6px; text-align: left; margin-bottom: 2rem;">
+                    <strong>University Name:</strong> Hindustan Institute of Technology and Science<br>
+                    <strong>Department:</strong> Department of Computer Science Engineering (AI & Data Science)<br>
+                    <strong>Developers:</strong> Developed by Divakar
+                </div>
+                <button class="btn" onclick="openModal('login-modal')">Access Scheduler System</button>
+            </div>
+        </section>
+
+        <!-- 2. SUPER ADMIN DASHBOARD -->
+        <section id="view-admin-dashboard" class="view-section hidden">
+            <h2 style="margin-bottom: 1.5rem;">Super Admin Workstation</h2>
+            <div class="grid-stats">
+                <div class="card">
+                    <h3>Total Departments</h3>
+                    <div class="value" id="stat-admin-depts">0</div>
+                </div>
+                <div class="card">
+                    <h3>Active Faculty</h3>
+                    <div class="value" id="stat-admin-faculty">0</div>
+                </div>
+                <div class="card">
+                    <h3>Total Courses</h3>
+                    <div class="value" id="stat-admin-courses">0</div>
+                </div>
+                <div class="card">
+                    <h3>Rooms Available</h3>
+                    <div class="value" id="stat-admin-rooms">0</div>
+                </div>
+                <div class="card">
+                    <h3>Active Rules</h3>
+                    <div class="value" id="stat-admin-rules">0</div>
+                </div>
+                <div class="card">
+                    <h3>Total Students</h3>
+                    <div class="value" id="stat-admin-students">0</div>
+                </div>
+                <div class="card">
+                    <h3>Class Teachers</h3>
+                    <div class="value" id="stat-admin-teachers">0</div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                    <button class="btn" onclick="navigateTo('crud')">Manage Database Entities</button>
+                    <button class="btn" onclick="navigateTo('rules')">Define Scheduling Constraints</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. HOD DASHBOARD -->
+        <section id="view-hod-dashboard" class="view-section hidden">
+            <h2 style="margin-bottom: 1.5rem;">Department HOD Dashboard (ISC)</h2>
+            <div class="grid-stats">
+                <div class="card">
+                    <h3>Department Faculty</h3>
+                    <div class="value" id="stat-hod-faculty">0</div>
+                </div>
+                <div class="card">
+                    <h3>Department Courses</h3>
+                    <div class="value" id="stat-hod-courses">0</div>
+                </div>
+                <div class="card">
+                    <h3>Assigned Classrooms</h3>
+                    <div class="value" id="stat-hod-rooms">0</div>
+                </div>
+                <div class="card">
+                    <h3>Sections Defined</h3>
+                    <div class="value" id="stat-hod-sections">0</div>
+                </div>
+                <div class="card">
+                    <h3>Total Students</h3>
+                    <div class="value" id="stat-hod-students">0</div>
+                </div>
+                <div class="card">
+                    <h3>Class Teachers</h3>
+                    <div class="value" id="stat-hod-teachers">0</div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Department Workflows</h3>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                    <button class="btn" onclick="navigateTo('timetable')">Create Section Timetable</button>
+                    <button class="btn btn-secondary" onclick="navigateTo('rules')">Build Custom Rules</button>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 2rem;">
+                <h3>Section Scheduling Statuses</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Section</th>
+                                <th>Room Number</th>
+                                <th>Class Teacher</th>
+                                <th>Phone Number</th>
+                                <th>Students Count</th>
+                                <th>Generation Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hod-sections-tbody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. CRUD MANAGER VIEW -->
+        <section id="view-crud-manager" class="view-section hidden">
+            <div class="dashboard-layout">
+                <aside>
+                    <h2>Entities</h2>
+                    <ul>
+                        <li><button onclick="changeCRUDEntity('departments')">Departments</button></li>
+                        <li><button onclick="changeCRUDEntity('faculties')">Faculty</button></li>
+                        <li><button onclick="changeCRUDEntity('courses')">Courses</button></li>
+                        <li><button onclick="changeCRUDEntity('sections')">Sections</button></li>
+                        <li><button onclick="changeCRUDEntity('rooms')">Rooms</button></li>
+                        <li><button onclick="changeCRUDEntity('laboratories')">Laboratories</button></li>
+                        <li><button onclick="changeCRUDEntity('rules')">Rules</button></li>
+                    </ul>
+                </aside>
+                <main class="content">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="text-transform: capitalize;">Manage <span id="crud-entity-title">Faculties</span></h2>
+                        <button class="btn" onclick="openAddModal()">Add New Record</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead id="crud-table-headers"></thead>
+                            <tbody id="crud-table-body"></tbody>
+                        </table>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- 5. TIMETABLE PLANNING MATRIX GRID -->
+        <section id="view-timetable-planner" class="view-section hidden">
+            <div class="dashboard-layout">
+                <aside>
+                    <h2>Timetable Module</h2>
+                    <ul class="timetable-menu">
+                        <li><button onclick="switchTimetableSubPage('dashboard')">Dashboard</button></li>
+                        <li><button onclick="switchTimetableSubPage('generate')">Generate Timetable</button></li>
+                        <li><button onclick="switchTimetableSubPage('view')">View Timetable</button></li>
+                        <li><button onclick="switchTimetableSubPage('validate')">Validation Report</button></li>
+                        <li><button onclick="switchTimetableSubPage('repair')">Repair Report</button></li>
+                    </ul>
+                </aside>
+                <main class="content">
+                    <!-- Sub-page A: Dashboard -->
+                    <div id="timetable-sub-dashboard" class="timetable-sub-page">
+                        <h2>Timetable Dashboard</h2>
+                        <div class="grid-stats" style="margin-top: 1.5rem;">
+                            <div class="card">
+                                <h3>Total Faculty</h3>
+                                <div class="value" id="tt-stat-faculty">0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Total Courses</h3>
+                                <div class="value" id="tt-stat-courses">0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Total Rooms</h3>
+                                <div class="value" id="tt-stat-rooms">0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Total Labs</h3>
+                                <div class="value" id="tt-stat-labs">0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Total Sections</h3>
+                                <div class="value" id="tt-stat-sections">0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Generated Timetables</h3>
+                                <div class="value" id="tt-stat-runs">0</div>
+                            </div>
+                            <div class="card">
+                                <h3>Latest Generation Time</h3>
+                                <div class="value" id="tt-stat-latest-time" style="font-size: 1.1rem; padding-top: 0.5rem; word-break: break-all;">N/A</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sub-page B: Generate Timetable -->
+                    <div id="timetable-sub-generate" class="timetable-sub-page hidden">
+                        <h2>Generate Timetable</h2>
+                        <div class="card" style="max-width: 600px; margin-top: 1.5rem;">
+                            <div class="form-group">
+                                <label for="generate-scope-select">Generation Scope</label>
+                                <select id="generate-scope-select" onchange="toggleGenerateScope()">
+                                    <option value="all">Entire Department</option>
+                                    <option value="section">Specific Section</option>
+                                </select>
+                            </div>
+                            <div class="form-group hidden" id="generate-section-group">
+                                <label for="generate-section-select">Select Section</label>
+                                <select id="generate-section-select">
+                                    <!-- Dynamic options -->
+                                </select>
+                            </div>
+                            <button class="btn" onclick="executeGeneration()">Generate Timetable</button>
+                        </div>
+                        
+                        <div class="card hidden" id="generation-results-card" style="margin-top: 1.5rem;">
+                            <h3>Generation Status</h3>
+                            <div style="margin-top: 1rem; line-height: 2;">
+                                <div><strong>Status:</strong> <span id="gen-status-val">N/A</span></div>
+                                <div><strong>Execution Time:</strong> <span id="gen-time-val">N/A</span></div>
+                                <div><strong>Validation Status:</strong> <span id="gen-validation-val">N/A</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sub-page C: View Timetable -->
+                    <div id="timetable-sub-view" class="timetable-sub-page hidden">
+                        <h2>View Timetable</h2>
+                        
+                        <div class="card" style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                            <div class="form-group" style="min-width: 150px; margin-bottom: 0;">
+                                <label for="timetable-type-select">View Category</label>
+                                <select id="timetable-type-select" onchange="updateTimetableIdOptions()">
+                                    <option value="section">Section</option>
+                                    <option value="faculty">Faculty</option>
+                                    <option value="lab">Laboratory</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="min-width: 200px; margin-bottom: 0;">
+                                <label for="timetable-id-select">Select Target</label>
+                                <select id="timetable-id-select" onchange="renderTimetableGrid()">
+                                    <!-- Dynamic options -->
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-secondary" onclick="downloadExport('html')">Download PDF / Print</button>
+                                <button class="btn btn-secondary" onclick="downloadExport('csv')">Download Excel / CSV</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Dynamic Timetable Matrix -->
+                        <div class="timetable-grid" id="timetable-grid-container"></div>
+                    </div>
+                    
+                    <!-- Sub-page D: Validation Report -->
+                    <div id="timetable-sub-validate" class="timetable-sub-page hidden">
+                        <h2>Validation Diagnosis Report</h2>
+                        <div class="card" style="margin-top: 1.5rem;">
+                            <button class="btn" onclick="executeValidation()">Run Validation Check</button>
+                            <div id="tt-validation-report" style="margin-top: 1.5rem; line-height: 1.6;">
+                                <p style="color: var(--text-secondary);">Click button to run validation.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sub-page E: Repair Report -->
+                    <div id="timetable-sub-repair" class="timetable-sub-page hidden">
+                        <h2>Local Search Repair Report</h2>
+                        <div class="card" style="margin-top: 1.5rem;">
+                            <button class="btn" onclick="executeRepair()">Run Conflict Repair</button>
+                            <div id="tt-repair-report" style="margin-top: 1.5rem; line-height: 1.6;">
+                                <p style="color: var(--text-secondary);">Click button to run repair engine.</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- 6. RULE BUILDERS (STRUCTURED & AI) -->
+        <section id="view-rule-builder" class="view-section hidden">
+            <h2>Timetable Scheduling Rule Builders</h2>
+            
+            <div class="tab-container" style="margin-top: 1.5rem;">
+                <button class="tab-btn active" onclick="switchRuleTab('structured')">Structured Builder</button>
+                <button class="tab-btn" onclick="switchRuleTab('natural')">Gemini AI Natural Language Builder</button>
+            </div>
+            
+            <!-- Tab 1: Structured Rule Builder -->
+            <div id="tab-structured" class="rule-tab-content">
+                <div class="card" style="max-width: 600px;">
+                    <form onsubmit="saveStructuredRule(event)">
+                        <div class="form-group">
+                            <label>Rule ID (slug)</label>
+                            <input type="text" name="rule_id" placeholder="e.g. F01_no_p1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Rule Name</label>
+                            <input type="text" name="rule_name" placeholder="e.g. Dr. Rekha avoids period 1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Rule Type</label>
+                            <select name="type">
+                                <option value="HARD">HARD Constraint</option>
+                                <option value="SOFT">SOFT Preference</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <input type="number" name="priority" value="1" min="1" max="10" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Target Faculty (Optional)</label>
+                            <input type="text" name="faculty_id" placeholder="e.g. F01">
+                        </div>
+                        <div class="form-group">
+                            <label>Target Course (Optional)</label>
+                            <input type="text" name="course_id" placeholder="e.g. ISC701">
+                        </div>
+                        <div class="form-group">
+                            <label>Avoid Day (Optional)</label>
+                            <select name="avoid_days">
+                                <option value="">None</option>
+                                <option value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Avoid Period (Optional)</label>
+                            <select name="avoid_periods">
+                                <option value="">None</option>
+                                <option value="1">Period 1</option>
+                                <option value="2">Period 2</option>
+                                <option value="3">Period 3</option>
+                                <option value="4">Period 4</option>
+                                <option value="5">Period 5</option>
+                                <option value="6">Period 6</option>
+                                <option value="7">Period 7</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn">Save Rule</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tab 2: Natural Language AI Rule Builder -->
+            <div id="tab-natural" class="rule-tab-content hidden">
+                <div class="card">
+                    <div class="form-group">
+                        <label>Describe the scheduling rule in natural language</label>
+                        <textarea id="natural-rule-text" rows="4" placeholder="e.g. Dr. Rekha (F01) cannot teach on Friday after Period 4"></textarea>
+                    </div>
+                    <button class="btn" onclick="parseNaturalRule()">Parse with Gemini 3.5 Flash</button>
+                    
+                    <div style="margin-top: 2rem;">
+                        <strong>Generated Rule JSON Structure Preview:</strong>
+                        <pre id="rule-preview-json" style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 1rem; border-radius: 4px; font-size: 0.85rem; margin-top: 0.5rem; min-height: 100px;"></pre>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn" onclick="saveParsedRule()">Approve & Save Rule</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Rules Table -->
+            <div class="card" style="margin-top: 2rem;">
+                <h3>Active Custom Rules</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rule ID</th>
+                                <th>Rule Name</th>
+                                <th>Type</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rules-list-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- TOAST CONTAINERS -->
+    <div id="toast-container"></div>
+
+    <!-- MODAL 1: ROLE-BASED LOGIN -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">UniSched Access Portal</div>
+                <button class="modal-close" onclick="closeModal('login-modal')">&times;</button>
+            </div>
+            <form onsubmit="event.preventDefault(); login(this.username.value, this.password.value);">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" placeholder="e.g. admin or hod" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Authenticate</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: VALIDATION REPORT -->
+    <div id="validation-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">Validation Diagnosis Report</div>
+                <button class="modal-close" onclick="closeModal('validation-modal')">&times;</button>
+            </div>
+            <div id="validation-report-results" style="line-height: 1.6; font-size: 0.95rem;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: RULE VERSIONS LIST -->
+    <div id="versions-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <div class="modal-title">Rule Version History</div>
+                <button class="modal-close" onclick="closeModal('versions-modal')">&times;</button>
+            </div>
+            <ul id="versions-list" style="list-style:none;max-height:400px;overflow-y:auto;"></ul>
+        </div>
+    </div>
+
+    <!-- MODAL 4: CRUD EDIT/ADD -->
+    <div id="crud-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="crud-modal-title">Add/Edit Record</div>
+                <button class="modal-close" onclick="closeModal('crud-modal')">&times;</button>
+            </div>
+            <form id="crud-entity-form" onsubmit="saveEntitySubmit(event)">
+                <div id="crud-form-fields-container"></div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Core App Logic -->
+    <script src="/app.js"></script>
+</body>
+</html>

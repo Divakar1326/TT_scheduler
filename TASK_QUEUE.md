@@ -1,0 +1,66 @@
+# TASK QUEUE
+
+## Development Phases
+
+- [x] Phase 0: Project Setup and Requirements Analysis
+- [x] Phase 1: Repository Layer
+  - [x] Database Connection Setup & Transaction Management
+  - [x] Base Repository CRUD Operations
+  - [x] Entity-Specific Repositories (Faculty, Course, Room, Lab, Section, Rules, etc.)
+  - [x] Unit Tests for Repositories
+- [x] Phase 2: Domain Models
+  - [x] Dataclasses for Domain Objects (Faculty, Course, Room, Lab, Section, Rules, etc.)
+  - [x] Mapping logic between DB rows and Domain models
+  - [x] Unit Tests for Models
+- [x] Phase 3: Constraint Engine & Rule Builder
+  - [x] Hard Constraint Checkers (Faculty/Room/Section/Lab Clashes, Faculty Workload Limits, Permanent Classroom/Teacher maintenance)
+  - [x] Soft Constraint Checkers (Morning labs, Workload balance, Compact timetable, Minimize room changes)
+  - [x] Structured Rule Builder and Parser
+  - [x] Natural Language Parser (Gemini API translator to JSON)
+  - [x] Unit Tests for Constraints
+- [x] Phase 4: Candidate Generator
+  - [x] Course Session Allocation Logic (`has_lab` True vs False session creation rules)
+  - [x] Difficulty sorting heuristics for Candidate Sessions
+- [x] Phase 5: Scheduler (Allocation Engine)
+  - [x] Create SchedulingState manager tracking occupancy and busy slot sets
+  - [x] Implement Scheduler placing chosen candidates
+  - [x] Create unit tests verifying allocation workload counts and deallocation rollbacks
+- [x] Phase 6: Backtracking Engine
+  - [x] State Management (Undo allocations, Try alternate paths)
+  - [x] Pruning heuristics and termination conditions
+  - [x] Unit Tests for backtracking allocation
+- [x] Phase 7: Validator
+  - [x] Complete Timetable Validation
+  - [x] Penalty cost score calculation
+- [x] Phase 8: Repair Engine
+  - [x] Conflict Resolution Heuristics
+  - [x] Legal Swap & Move Generator
+- [x] Phase 9: Backend API & Exporter
+  - [x] Session and role-based login authorization endpoints
+  - [x] RESTful CRUD endpoints for all schema entities
+  - [x] Scheduler endpoints (Generate, Validate, Repair, Export)
+  - [x] Dashboard quick-count statistics
+  - [x] Grid exports (Section, Faculty, Lab) to CSV/Excel format
+- [/] Phase 10: AI Rule Engine Integration
+  - [x] Gemini prompt manager configuration (no hardcoded prompts)
+  - [x] Structured parameters database schema version control
+  - [x] Entity checks and duplication/contradiction validators
+  - [x] RESTful rule management API (toggle, delete, version history)
+  - [ ] Complete Google GenAI SDK integration (`google-genai`)
+  - [ ] Complete Natural Language → Rule → Scheduler pipeline
+- [/] Phase 11: Modern UI
+  - [x] Landings, authentication blocks, and view routes
+  - [x] Super Admin and HOD dashboard views
+  - [x] Entity CRUD forms and tables
+  - [x] Structured & AI rule builders
+  - [x] 7x5 interactive Grid representation, validation reports, local search repairs, and CSV exports
+  - [ ] Build the complete frontend
+  - [ ] Integrate frontend with backend and scheduler
+- [ ] Phase 12: Production Preparation & Optimizations
+  - [x] Excel CSV grid outputs and print-ready HTML exporters
+  - [x] Rotating loggers, connection timeouts, and database index creations
+  - [x] Stress tests module & performance optimizations (average search time under 0.6s)
+  - [x] Complete README, API, architecture, and deployment documentation
+- [ ] Phase 15: End-to-End Testing & Verification
+
+
