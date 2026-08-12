@@ -4,8 +4,8 @@
 
 // Global State
 const state = {
-    token: localStorage.getItem("auth_token") || null,
-    role: localStorage.getItem("auth_role") || null,
+    token: null,          // Always start unauthenticated — login required on every session
+    role: null,
     currentPage: "landing",
     selectedDept: localStorage.getItem("auth_dept") || "ISC",
     timetableData: [],
@@ -101,67 +101,210 @@ const API_BASE = "";
 
 // Help Documentation Topics List
 const HELP_TOPICS = [
+    // ─── GETTING STARTED ─────────────────────────────────────────────────────
     {
-        title: "1. Project Overview & Architecture Overview",
-        category: "General",
-        content: "UniSched ERP is an AI-powered academic resource planner. It models university timetabling as a Constraint Satisfaction Problem (CSP). It uses a hybrid repository architecture supporting high-performance Supabase PostgreSQL connections with an offline-ready SQLite fallback database. The system automates conflict-free timetable generation using a Backtracking Solver, Local Search Repair engine, and a multi-provider AI inference engine for natural language rule translation."
+        title: "1. What is UniSched ERP?",
+        category: "Getting Started",
+        content: "UniSched ERP is an AI-powered University Timetable Automation System. It solves the academic scheduling problem — assigning courses, faculty, rooms, and time slots to sections — without conflicts. The system models timetabling as a Constraint Satisfaction Problem (CSP) and uses a Backtracking Solver, Local Search Repair Engine, and a multi-provider AI inference engine. It supports two database modes: Supabase PostgreSQL (cloud) for production, and SQLite (local) for offline/development use."
     },
     {
-        title: "2. Authentication & Role Permissions",
-        category: "Access Control",
-        content: "Access to UniSched is role-based. (1) Super Admin: Global read/write access to configure all infrastructure (departments, rooms, labs) and HOD accounts. (2) Department HOD (Head of Department): Department-scoped permissions to generate timetables, customize rules, and manage assignments. Session verification is secured via JSON Web Tokens (JWT) stored locally."
+        title: "2. Login & User Roles",
+        category: "Getting Started",
+        content: "UniSched uses role-based access control with two roles:\n\n• SUPER ADMIN — Full system access. Can create/edit/delete all departments, faculty, courses, rooms, labs, and HOD accounts. Username: admin\n\n• HOD (Head of Department) — Department-scoped access only. Can manage their own department's faculty, courses, sections, rooms, labs, rules, and generate/export timetables. HOD usernames follow the pattern: hod_{department_id_lowercase} (e.g. hod_cse, hod_ise, hod_ece, hod_aids).\n\nTo login: Click 'Login as HOD' or 'Login as Admin' from the landing page. Session ends when you click Logout or close/refresh the browser — you must login again each time."
     },
     {
-        title: "3. Admin Workflow & System Flow",
-        category: "System Flow",
-        content: "The standard administrator flow is: (1) Create Departments. (2) Register Faculty and assign them to Departments. (3) Define Courses and link them to Departments. (4) Create Sections with Classrooms and Class Teachers. (5) Define structured or AI-parsed Rules. (6) Execute Timetable Generation. (7) Inspect, repair, and publish/export the final timetable."
+        title: "3. Default Credentials & Accounts",
+        category: "Getting Started",
+        content: "Default credentials are set when the system database is first initialized:\n\n┌─────────────────────┬──────────────────────────┬──────────────┐\n│ Role                │ Username                 │ Password     │\n├─────────────────────┼──────────────────────────┼──────────────┤\n│ System Admin        │ admin                    │ adminpassword│\n│ HOD — CSE           │ hod_cse                  │ csepassword  │\n│ HOD — ISC/ISE       │ hod_isc                  │ iscpassword  │\n│ HOD — ECE           │ hod_ece                  │ ecepassword  │\n│ HOD — AIDS          │ hod_aids                 │ aidspassword │\n└─────────────────────┴──────────────────────────┴──────────────┘\n\nNote: When the Admin creates a new department, a HOD account is automatically created. The generated password is shown ONCE on screen — save it immediately. Passwords can be changed from Settings > Change Password."
     },
     {
-        title: "4. Department Creation & Management",
-        category: "Data setup",
-        content: "Navigate to Academics > Departments. When creating a department, you must provide a unique Department ID/Code (e.g. ISC) and Name. You can select an active faculty member as the Head of Department (HOD). Opening a department card immediately displays related counts (faculty count, course count, sections, rooms, and labs) and the assigned HOD."
+        title: "4. Changing Your Password",
+        category: "Getting Started",
+        content: "To change your password:\n1. Login with your current credentials.\n2. Go to Settings (bottom of sidebar).\n3. Scroll to the 'Change Password' section.\n4. Enter your current (old) password, new password, and confirm.\n5. Click 'Update Password'.\n\nRules:\n• You can only change your own password (HODs cannot change other users' passwords).\n• Admin can change any user's password.\n• Passwords are stored securely as salted bcrypt hashes — never stored as plain text.\n• If you forget your password, ask the Admin to reset it from the backend."
     },
     {
-        title: "5. Faculty Creation & Availabilities",
-        category: "Data setup",
-        content: "Navigate to Academics > Faculty. Specify ID, Name, Department, Designation, Email, Phone, Professor Type (Regular/Adjunct/Visiting), Max Weekly Hours, Max Daily Hours, Status, Specialization, Preferred Days, and Preferred Time Slots. You can select assigned courses using the searchable checkboxes. The system prevents manual input of course IDs."
+        title: "5. Recommended Setup Order (Quick Start)",
+        category: "Getting Started",
+        content: "Follow this exact sequence for a clean initial setup:\n\n1. Login as Admin\n2. Create Departments (e.g. CSE, ISE, ECE)\n3. Add Rooms (classrooms) for each department\n4. Add Labs for departments that have practical courses\n5. Add Faculty and assign them to departments\n6. Add Courses — set theory hours, lab hours, and link required labs\n7. Add Sections — assign classroom, class teacher, and link courses\n8. (Optional) Define Rules via Rule Builder\n9. Login as HOD → Navigate to Generate Timetable → Select department → Click Generate\n10. View generated timetable → Export as PDF/Excel/CSV\n\nSkipping steps or adding data out of order is the most common cause of solver failures."
+    },
+
+    // ─── DEPARTMENTS ─────────────────────────────────────────────────────────
+    {
+        title: "6. Managing Departments",
+        category: "Data Management",
+        content: "Path: Sidebar > Departments (Admin only)\n\nCreating a Department:\n• Department Code/ID: Short unique identifier (e.g. CSE, ISC, ECE, AIDS). Case-insensitive.\n• Department Name: Full official name.\n• HOD: Optionally select an existing faculty member as HOD label (cosmetic only — actual HOD login is auto-created).\n\nWhen you create a department:\n• A HOD login account is automatically generated (username: hod_{id_lowercase}).\n• A random secure password is generated and shown ONCE — copy it before closing.\n\nDepartment cards show live counts: faculty, courses, sections, rooms, labs.\n\nDeleting a department: Soft-delete only (data is preserved in DB, not visible in UI). Cannot be undone from the UI."
+    },
+
+    // ─── FACULTY ─────────────────────────────────────────────────────────────
+    {
+        title: "7. Managing Faculty",
+        category: "Data Management",
+        content: "Path: Sidebar > Faculty\n\nRequired fields: Faculty ID (e.g. F001), Faculty Name, Department.\n\nOptional but important:\n• Max Weekly Hours: Cap on total lectures per week (default 30). Scheduler respects this.\n• Max Daily Hours: Maximum lectures in a single day (default 8).\n• Professor Type: Regular / Adjunct / Visiting — affects scheduling priority.\n• Preferred Days: Comma-separated day numbers (1=Mon … 5=Fri). Soft constraint.\n• Preferred Periods: Comma-separated slot numbers. Soft constraint.\n• Status: ACTIVE faculty are included in scheduling; ON_LEAVE / RETIRED are excluded.\n• Assigned Courses: Multi-select. Links this faculty to courses they can teach.\n\nHOD restriction: HODs can only view/edit faculty in their own department. Admin sees all."
+    },
+
+    // ─── COURSES ─────────────────────────────────────────────────────────────
+    {
+        title: "8. Managing Courses",
+        category: "Data Management",
+        content: "Path: Sidebar > Courses\n\nRequired: Course Code (e.g. CS301), Course Name, Department, Semester.\n\nKey fields:\n• Theory Hours (L+T): Lecture + Tutorial hours per week. These become individual 1-period scheduled slots.\n• Lab Hours (P): Practical hours per week. The scheduler automatically groups these into consecutive 2-period lab sessions.\n• Has Lab Component: Set to 'Yes' if this course has practicals.\n• Required Laboratory: The specific lab room this course must use (optional — if blank, any available lab is used).\n• Course Color: Visual color used in the timetable grid display.\n• Difficulty Weight (1–5): Higher value = solver tries to schedule this course first.\n• Assigned Faculty: Which faculty can teach this course.\n• Assigned Sections: Which sections study this course.\n\nImportant: If Lab Hours > 0, always set 'Has Lab' to Yes and link a Required Lab if applicable."
+    },
+
+    // ─── SECTIONS ────────────────────────────────────────────────────────────
+    {
+        title: "9. Managing Sections",
+        category: "Data Management",
+        content: "Path: Sidebar > Sections\n\nA Section represents a group of students (a class batch).\n\nRequired: Section ID (e.g. CSE-A, 3ISC-B), Section Name, Semester, Department.\n\nKey fields:\n• Capacity: Maximum student seats in this section's classroom.\n• Strength: Actual enrolled students. Must not exceed room capacity or solver will flag conflicts.\n• Assigned Classroom: The room where this section normally sits.\n• Class Teacher: The mentor/homeroom faculty for this section.\n• Assigned Courses: All courses this section attends.\n\nSection detail cards show: timetable grid, lab schedules, and generation status.\n\nHOD restriction: HODs only see/edit their own department's sections."
+    },
+
+    // ─── ROOMS & LABS ─────────────────────────────────────────────────────────
+    {
+        title: "10. Managing Rooms (Classrooms)",
+        category: "Data Management",
+        content: "Path: Sidebar > Rooms\n\nRequired: Room Number (unique ID, e.g. R101, A-203), Seating Capacity.\n\nKey fields:\n• Department Allocation: Which department primarily uses this room (used for scoping).\n• Room Type: PROJECTOR / SMART / LAB — informational tag.\n• Availability Pattern: Leave as 'All Slots' for full availability, or enter a JSON pattern to restrict specific days/periods.\n\nImportant: Room capacity must be ≥ section strength, otherwise the validator will report a capacity violation."
     },
     {
-        title: "6. Course Creation & Lab Setup",
-        category: "Data setup",
-        content: "Navigate to Academics > Courses. Specify Course Code, Name, Department, Semester, Credits, Theory Hours, Lab Hours, Course Type (Core/Elective), Required Laboratory, and Course Color. Searchable dropdowns link assigned faculty and sections. Opening a course card shows active faculty, studying sections, and required lab room."
+        title: "11. Managing Laboratories",
+        category: "Data Management",
+        content: "Path: Sidebar > Laboratories\n\nRequired: Lab Room Code (unique ID, e.g. LAB-CS1), Lab Name, Workstation Capacity.\n\nKey fields:\n• Department Allocation: Which department owns this lab.\n• Lab Incharge: Faculty member responsible for this lab.\n• Equipment Profile: Free-text description of hardware/software (e.g. 'NVIDIA GPUs, Python 3.11, Cisco Packet Tracer').\n• Availability Pattern: Default 'All Slots' means available all periods.\n\nLab sessions are ALWAYS scheduled as consecutive 2-period blocks (e.g. Period 1–2, Period 3–4) to allow meaningful practical time. The solver enforces this automatically."
     },
+
+    // ─── RULES ───────────────────────────────────────────────────────────────
     {
-        title: "7. Section Creation & Mentorship",
-        category: "Data setup",
-        content: "Navigate to Academics > Sections. Specify Section Code, Name, Semester, Department, Capacity, Strength, Class Teacher, and classroom. Link courses via searchable checkboxes. Opening a section card displays the assigned class teacher, classroom, lab batches, and the generated weekly timetable."
-    },
-    {
-        title: "8. Room & Laboratory Creation",
-        category: "Data setup",
-        content: "Navigate to Infrastructure > Rooms / Laboratories. For classrooms, specify Room Number, Capacity, Department, Room Type (Projector/Smart/Lab), and Availability. For labs, specify Lab Room Number, Name, Capacity, Lab Incharge, Equipment, and Availability. Opening a lab displays allocated timetable, courses, and active faculty."
-    },
-    {
-        title: "9. Rule Builder & AI Translation",
+        title: "12. Rule Builder — Overview",
         category: "Constraint Management",
-        content: "Custom constraints prevent conflicts. (1) Structured Rule Builder: Use forms to restrict faculty, courses, or rooms. (2) AI Rule Builder: Describe rules in natural language (e.g. 'Dr. Rekha cannot teach on Friday after Period 4'). The AI inference engine translates this to structured JSON parameters. The system automatically routes through OpenRouter, Groq, and Cerebras with intelligent failover."
+        content: "Path: Sidebar > Rules\n\nRules define scheduling constraints. There are two types:\n\n• HARD rules: Must never be violated. Example: 'Dr. Sharma cannot teach on Saturday.' If violated, the solver backtracks.\n• SOFT rules: Preferred but not mandatory. Example: 'Dr. Rekha prefers morning slots.' Violations are penalized in the quality score but don't block generation.\n\nRules are versioned — every save creates a new version. You can view history, toggle rules on/off, and roll back versions. Department-scoped rules only apply to that department's timetable.\n\nTwo methods to create rules:\n1. Structured Rule Builder (form-based)\n2. AI Rule Builder (natural language input)"
     },
     {
-        title: "10. Scheduler Solver & Timetable Generation",
-        category: "Core Engine",
-        content: "The Backtracking CSP Solver ranks sections and courses. It generates candidates for each course session, enforcing hard constraints. For laboratory courses (Practical), it automatically schedules consecutive 2-period slots (e.g. P1-P2, P3-P4) in the same laboratory. Soft preferences are evaluated to optimize quality."
+        title: "13. Rule Builder — Structured Form",
+        category: "Constraint Management",
+        content: "The Structured Rule Builder provides a form interface to create rules without writing JSON.\n\nRule ID: A unique slug identifier (e.g. no-fri-lectures). Use lowercase-with-dashes.\nRule Name: Human-readable label.\nRule Type: HARD or SOFT.\nPriority: Higher number = higher enforcement priority (1–10).\nParameter: The JSON constraint definition. Examples:\n\nFaculty unavailability:\n{\"constraint\": \"faculty_unavailable\", \"faculty_id\": \"F001\", \"day\": 5}\n\nRoom restriction:\n{\"constraint\": \"room_fixed\", \"section_id\": \"CSE-A\", \"room_no\": \"R201\"}\n\nMax consecutive lectures:\n{\"constraint\": \"max_consecutive\", \"faculty_id\": \"F003\", \"max\": 2}\n\nThe system validates entities exist before saving and checks for duplicates and contradictions."
     },
     {
-        title: "11. Export, Reports & Settings Preferences",
-        category: "Reporting",
-        content: "Timetables can be exported into three formats: Print/PDF (formatted page layout), Excel (styled spreadsheet report), and CSV (raw data table). The Settings page allows changing themes (Orange, Blue, Green, Purple, Red), toggling compact Density grids, and displays real-time Supabase/AI Engine connection statuses, last sync time, and API versions."
+        title: "14. Rule Builder — AI Natural Language",
+        category: "Constraint Management",
+        content: "The AI Rule Builder translates plain English descriptions into structured JSON rules.\n\nHow to use:\n1. Go to Rules > AI Rule Builder tab.\n2. Type your rule in plain English. Examples:\n   - 'Dr. Rekha cannot teach on Fridays'\n   - 'The Database lab must be scheduled before Period 4'\n   - 'Section CSE-A should not have more than 3 consecutive classes'\n   - 'Prof. Kumar prefers morning sessions from Period 1 to 3'\n3. Click 'Translate with AI'.\n4. Review the generated JSON in the preview panel.\n5. Edit if needed, then click 'Save Rule'.\n\nAI Provider Fallback Chain:\nOpenRouter → Groq → Cerebras → Gemini\n\nIf one provider is down or rate-limited, the system automatically tries the next. The current provider is shown in Settings > AI Engine Status.\n\nSafety: AI output is always validated against the rule schema before saving. Invalid JSON or unknown constraint types are rejected."
+    },
+
+    // ─── TIMETABLE GENERATION ─────────────────────────────────────────────────
+    {
+        title: "15. Generating a Timetable",
+        category: "Scheduler Engine",
+        content: "Path: Sidebar > Generate Timetable\n\nSteps:\n1. Select a Department from the dropdown (HODs see only their own).\n2. Optionally select a specific Section to generate for just one group.\n3. Click 'Generate Timetable'.\n4. Watch the real-time progress stream:\n   • Stage 1–3: DB connection, academic year, departments loaded\n   • Stage 4–7: Sections, courses, faculty, rooms & labs loaded\n   • Stage 8–11: Sessions built, candidates generated\n   • Stage 12–14: CSP solver running, labs scheduled\n   • Stage 15–16: Results saved, complete\n5. When complete: Hard Score %, Soft Penalty, and total sessions scheduled are shown.\n\nA Hard Score of 100% means zero hard constraint violations. Soft penalty indicates preference satisfaction quality."
     },
     {
-        title: "12. FAQs, Troubleshooting & Best Practices",
-        category: "Support",
-        content: "Q: 'Duplicate ID error' - Ensure ID case-insensitivity is respected; 'eee' and 'EEE' are treated as the same. Q: 'Solver fails' - Relax rules or ensure rooms have sufficient capacity for section strengths. Best Practice: Seed base entities first (Departments, Rooms, Faculty) before linking sections and courses."
+        title: "16. Understanding the CSP Solver",
+        category: "Scheduler Engine",
+        content: "The scheduler uses a Backtracking Constraint Satisfaction Problem (CSP) solver.\n\nHow it works:\n1. Sections are ranked by difficulty (courses with more constraints go first).\n2. For each session, a list of valid candidates (day + period + room/lab) is generated.\n3. Each candidate is checked against all active HARD rules.\n4. If a candidate is valid, it's assigned. If not, the solver backtracks and tries the next.\n5. For lab sessions: Two consecutive periods in the same lab are always scheduled together.\n6. After the primary pass, a Local Search Repair Engine resolves remaining conflicts.\n\nSoft constraints (preferences) are scored as a penalty. The solver reports both scores:\n• Hard Score: % of sessions with zero hard violations (target: 100%)\n• Soft Penalty: Lower = better quality (target: 0)"
+    },
+    {
+        title: "17. What Happens If Generation Fails or Partially Succeeds?",
+        category: "Scheduler Engine",
+        content: "Common failure modes:\n\n• 'No sections found' — The selected department has no sections. Create sections first.\n• 'No courses assigned' — Sections exist but no courses are linked. Assign courses to sections.\n• 'No faculty available' — All faculty are ON_LEAVE or none are assigned to the department's courses.\n• Hard Score < 100% — Some sessions could not be placed without violating a hard constraint. Solutions:\n   - Relax/disable overly restrictive rules.\n   - Add more room capacity.\n   - Reduce max daily/weekly hour limits.\n   - Add more rooms or labs.\n• Duplicate run error — A generation is already in progress. Wait for it to complete.\n\nAfter partial generation, use the Repair function (Validate page) to attempt auto-repair of conflicts."
+    },
+    {
+        title: "18. Using the Repair Engine",
+        category: "Scheduler Engine",
+        content: "Path: Timetables > Verify Constraints > Repair\n\nThe Repair Engine attempts to fix remaining hard constraint violations after generation.\n\nHow it works:\n1. The engine identifies all sessions with violations (room conflicts, faculty double-booking, capacity issues).\n2. It attempts to swap, move, or reassign sessions to valid slots.\n3. Repaired sessions are merged back into the timetable.\n4. Statistics show: sessions repaired, remaining conflicts.\n\nWhen to use:\n• After generation if Hard Score < 100%.\n• After manual data changes (e.g. a new room was added) to re-optimize.\n\nNote: Repair does not change the solver's logic — it operates on the final result only."
+    },
+
+    // ─── VIEWING TIMETABLES ───────────────────────────────────────────────────
+    {
+        title: "19. Viewing Timetables",
+        category: "Timetable Views",
+        content: "UniSched provides four timetable views:\n\n1. Section Timetable (Timetables page): Shows the weekly schedule for a selected section/class batch. Each cell shows: Course name, Faculty name, Room number. Lab sessions appear as merged 2-period blocks.\n\n2. Faculty Timetable (Faculty View page): Shows all classes a selected faculty member teaches across the week. Useful for checking a professor's workload.\n\n3. Lab Timetable (Lab View page): Shows which course/section is using a selected laboratory at each time slot.\n\n4. Department-wide view: Export type 'department' generates a combined CSV/Excel for all sections in a department.\n\nAll views update immediately after a new timetable is generated."
+    },
+    {
+        title: "20. Exporting Timetables",
+        category: "Timetable Views",
+        content: "All timetable views support three export formats:\n\n• Print / PDF: Opens an HTML print layout optimized for A4 printing. Use your browser's Print function (Ctrl+P / Cmd+P) and select 'Save as PDF'.\n\n• Excel (.xls): Downloads a formatted spreadsheet with color-coded cells and a proper timetable grid layout.\n\n• CSV: Downloads a raw comma-separated file suitable for import into other tools.\n\nExport types available:\n• section — Timetable for one section\n• faculty — Schedule for one faculty member\n• lab — Occupancy schedule for one lab\n• department — All sections in a department (CSV only)\n\nAccess Control: HODs can only export their own department's data. Attempting to export another department's timetable will be rejected."
+    },
+    {
+        title: "21. Validation & Constraint Checking",
+        category: "Timetable Views",
+        content: "Path: Timetables > Verify Constraints\n\nThe Validator checks the generated timetable for:\n\nHard Constraint Checks:\n• Faculty double-booking (same faculty in two places at once)\n• Room double-booking (same room used by two sections simultaneously)\n• Lab double-booking (same lab used by two sections simultaneously)\n• Capacity violations (section strength > room capacity)\n• Lab continuity (lab sessions must be consecutive 2-period blocks)\n• Unscheduled sessions (sessions that couldn't be placed)\n\nSoft Constraint Checks:\n• Faculty preference violations (teaching outside preferred days/periods)\n• Max consecutive lecture violations\n• Workload distribution imbalance\n\nResults show each violation with its type, affected entities, and severity. Use this to diagnose why a timetable has a low Hard Score."
+    },
+
+    // ─── DASHBOARD ───────────────────────────────────────────────────────────
+    {
+        title: "22. Dashboard Overview",
+        category: "Navigation",
+        content: "The Dashboard is the first page after login.\n\nAdmin Dashboard shows:\n• Total Departments, Faculty, Courses, Rooms, Labs, Rules (system-wide)\n• Section Status table: which sections have timetables generated\n• Quick navigation to all management modules\n\nHOD Dashboard shows:\n• Department-scoped counts: Faculty, Courses, Rooms, Labs, Sections, Students, Rules\n• Section status with class teacher details and generation status\n• Quick-access buttons for common actions\n\nAll counts update in real-time. Click 'Refresh' to force a data reload from the database."
+    },
+
+    // ─── SETTINGS ────────────────────────────────────────────────────────────
+    {
+        title: "23. Settings & Personalization",
+        category: "Navigation",
+        content: "Path: Sidebar > Settings\n\nTheme Color: Choose from Orange (default), Blue, Green, Purple, or Red accent colors.\n\nTheme Mode: Light or Dark mode.\n\nDisplay Density: Normal or Compact (reduces padding for larger data tables).\n\nDatabase Status: Shows live connection status to Supabase PostgreSQL (production) or SQLite (local). Displays last sync timestamp and connection pool details.\n\nAI Engine Status: Shows which AI provider is currently active (OpenRouter / Groq / Cerebras / Gemini), the model in use, last successful request timestamp, and average response time.\n\nChange Password: Allows updating your own login password (requires current password).\n\nAll theme/display preferences are saved in browser local storage and persist across sessions (even after logout)."
+    },
+
+    // ─── SYSTEM ARCHITECTURE ──────────────────────────────────────────────────
+    {
+        title: "24. System Architecture",
+        category: "Technical Reference",
+        content: "UniSched ERP Architecture:\n\nFrontend: Single-page HTML/CSS/JS application (no framework). State managed in a global object. TTL-based client-side cache for fast navigation.\n\nBackend: Python Flask REST API. Blueprints: auth, crud, scheduler, rules, hod.\n\nDatabase (Dual-mode):\n• Production: Supabase PostgreSQL (cloud) — SUPABASE_URL + SUPABASE_KEY + DATABASE_URL\n• Development: SQLite local file — database/timetable.db\n\nScheduler Engine: Backtracking CSP solver → Local Search Repair Engine.\n\nAI Engine: Unified AIService with provider fallback chain: OpenRouter → Groq → Cerebras → Gemini.\n\nAuthentication: In-memory session token store (UUID tokens). Role-based access control (SUPER_ADMIN / HOD). Department-scoped data isolation enforced server-side.\n\nExports: TimetableExporter generates CSV, Excel (.xls), and HTML print layouts."
+    },
+    {
+        title: "25. Database Schema Overview",
+        category: "Technical Reference",
+        content: "Key tables:\n\n• department — Stores department details\n• faculty — Faculty members with availability and preferences\n• courses — Course definitions with LTP credits\n• sections — Student batches with classroom and teacher assignments\n• rooms — Classroom infrastructure\n• labs — Laboratory rooms\n• faculty_course — M:N mapping (which faculty teaches which courses)\n• section_course — M:N mapping (which section attends which course)\n• course_lab — M:N mapping (which course uses which lab)\n• rules — Version-controlled scheduling constraint definitions\n• scheduler_run — Execution metadata (status, timestamps, department)\n• schedule — Generated timetable assignments (section × course × day × period × room/lab)\n• users — Authentication accounts (HOD + Admin)\n• academic_year — Academic year and semester configuration\n\nRelationship hierarchy: Department → (Faculty, Courses, Sections, Rooms, Labs) → Schedule"
+    },
+    {
+        title: "26. AI Provider Configuration",
+        category: "Technical Reference",
+        content: "The AI engine supports four providers with automatic failover:\n\nPriority chain (default): OpenRouter → Groq → Cerebras → Gemini\n\nConfigure in .env file:\n• AI_PROVIDER=gemini (sets the preferred primary provider)\n• OPENROUTER_API_KEY, OPENROUTER_MODEL\n• GROQ_API_KEY, GROQ_MODEL\n• CEREBRAS_API_KEY, CEREBRAS_MODEL\n• GEMINI_API_KEY, GEMINI_MODEL\n\nThe provider listed in AI_PROVIDER is tried first. If it fails (timeout, rate limit, error), the system automatically tries the next provider in the chain. This makes AI rule translation resilient to individual provider outages.\n\nCurrent provider status is visible in Settings > AI Engine Status. API keys are never sent to the browser — all AI calls happen server-side only."
+    },
+    {
+        title: "27. Environment Variables Reference",
+        category: "Technical Reference",
+        content: "Required environment variables (set in .env file):\n\nAPP_ENV — production or development\nPORT — HTTP port (default 8000)\nJWT_SECRET — Secret key for session security (use a strong random string)\n\nSupabase (Production):\nSUPABASE_URL — Your Supabase project URL\nSUPABASE_KEY — Supabase publishable/anon key\nSUPABASE_SERVICE_ROLE_KEY — Service-role key (backend only, never sent to browser)\nDATABASE_URL — PostgreSQL connection URL\n\nLocal Development:\nLOCAL_MODE=true — Use SQLite instead of Supabase\nDATABASE_PATH — Path to SQLite file (default: database/timetable.db)\n\nAI Providers:\nOPENROUTER_API_KEY, OPENROUTER_MODEL\nGROQ_API_KEY, GROQ_MODEL\nCEREBRAS_API_KEY, CEREBRAS_MODEL\nGEMINI_API_KEY, GEMINI_MODEL\nAI_PROVIDER — Primary provider name\n\nLogging:\nLOG_LEVEL — DEBUG / INFO / WARNING / ERROR"
+    },
+
+    // ─── TROUBLESHOOTING ──────────────────────────────────────────────────────
+    {
+        title: "28. Troubleshooting — Common Errors",
+        category: "Troubleshooting",
+        content: "Error: 'Duplicate ID' when creating entities\n→ UniSched is case-insensitive for IDs. 'CSE' and 'cse' are the same. Choose a different ID.\n\nError: 'Faculty not found' in rules\n→ The faculty_id in the rule JSON does not exist in the database. Check the exact ID.\n\nError: 'No timetable generated yet'\n→ Run Generate Timetable first. The timetable view requires at least one successful generation.\n\nError: 'Access denied' on API call\n→ Your session has no permission for this data. Logout and login again with the correct account.\n\nError: 'AI rule translation failed'\n→ All AI providers are offline or rate-limited. Check your API keys in .env and try again later.\n\nError: Server returns 500 with request_id\n→ An internal error occurred. Note the request_id and check the server logs at logs/timetable_app.log."
+    },
+    {
+        title: "29. Troubleshooting — Scheduler Issues",
+        category: "Troubleshooting",
+        content: "Solver produces Hard Score < 100%:\n→ Check that all sections have assigned courses, all courses have assigned faculty, and all sections have an assigned classroom.\n→ Check that room capacity ≥ section strength for all sections.\n→ Disable or relax overly restrictive HARD rules.\n→ Add more rooms or labs if resources are genuinely insufficient.\n→ Run the Repair Engine to fix remaining conflicts automatically.\n\nGeneration completes instantly with 0 sessions:\n→ The selected department has no sections, or sections have no courses linked.\n\nGeneration hangs indefinitely:\n→ If the progress stream stops, the solver may be stuck in a constraint deadlock. Refresh the page and try with fewer hard rules.\n\nDuplicate run ID error:\n→ A previous generation is still running or crashed mid-way. Wait 30 seconds and try again."
+    },
+    {
+        title: "30. Troubleshooting — Login Issues",
+        category: "Troubleshooting",
+        content: "Cannot login — 'Invalid credentials':\n→ Double-check the username (case-sensitive: use lowercase like hod_cse, not HOD_CSE).\n→ If you changed the password and forgot it, ask the System Admin to reset it.\n→ Default passwords follow the pattern: {department_id_lowercase}password (e.g. csepassword for hod_cse).\n\nForgot Admin password:\n→ There is no self-service reset for Admin. Access the server directly and run:\n   python -c \"from werkzeug.security import generate_password_hash; print(generate_password_hash('newpassword'))\"\n   Then update the users table directly in the database.\n\nLogged out immediately after login:\n→ The server may have restarted, invalidating all sessions. This is expected — login again.\n\nLogin button does nothing:\n→ Check that the backend server is running (python -m app.api.app). Check browser console for errors."
+    },
+
+    // ─── DATA INTEGRITY ───────────────────────────────────────────────────────
+    {
+        title: "31. Data Integrity & Best Practices",
+        category: "Best Practices",
+        content: "Before generating timetables, verify:\n\n✓ Every section has at least one course assigned.\n✓ Every course has at least one faculty assigned.\n✓ Every section has an assigned classroom.\n✓ Classroom capacity ≥ section strength for all sections.\n✓ Lab-required courses have a required lab specified.\n✓ Faculty status is ACTIVE for all intended teaching staff.\n✓ No circular dependency in rules (e.g. two HARD rules that contradict each other).\n\nBest Practices:\n• Use meaningful IDs: 'F001', 'CS301', 'CSE-A' rather than generic names.\n• Set course colors so the timetable grid is visually distinct and easy to read.\n• Add SOFT rules for faculty preferences before HARD rules — HARD rules are absolute.\n• Always verify constraints after generation before exporting to stakeholders.\n• Export both Excel and PDF for distribution — PDF for notice boards, Excel for further processing."
+    },
+    {
+        title: "32. Keyboard Shortcuts & Navigation Tips",
+        category: "Best Practices",
+        content: "Navigation:\n• Click any sidebar item to navigate.\n• Press Escape to close any open modal/dialog.\n• Click outside a modal to close it.\n\nSearch:\n• Help page: Use the search bar to filter help topics by keyword.\n• CRUD tables: Use the column filter dropdowns at the top of data tables.\n\nExport shortcuts:\n• From any timetable view: Click Print/PDF, Excel, or CSV buttons.\n• PDF export: Browser print dialog opens — choose 'Save as PDF' as the printer.\n\nPerformance:\n• First load after login may be slightly slower as the system warms the data cache.\n• Subsequent navigation is instant due to the TTL cache.\n• Click the Refresh button (circular arrow) in the header to force-reload from the database.\n\nSidebar:\n• Click the ← collapse button to hide the sidebar for more screen space.\n• Click → to expand it again."
+    },
+    {
+        title: "33. Security & Access Control Summary",
+        category: "Technical Reference",
+        content: "UniSched enforces security at multiple layers:\n\nAuthentication:\n• Login required on every session — no persistent auto-login.\n• Session tokens are UUID-based, generated at login, and cleared on logout or server restart.\n• Passwords are bcrypt-hashed in the database — never stored in plaintext.\n\nAuthorization (server-enforced):\n• HOD users can ONLY read/write data belonging to their own department — enforced server-side.\n• HOD cannot generate timetables for other departments — department_id is locked to session.\n• HOD cannot export other departments' timetables — export endpoint verifies ownership.\n• Password reset requires authentication — unauthenticated resets are rejected.\n\nData exposure:\n• AI provider API keys are NEVER sent to the browser.\n• Supabase service-role key is NEVER sent to the browser.\n• Error messages in production are generic — technical details go only to server logs.\n• File exports use secure fetch with Authorization header — token is not exposed in URLs."
+    },
+    {
+        title: "34. Supabase RLS (Row-Level Security)",
+        category: "Technical Reference",
+        content: "UniSched includes a Supabase RLS policy file: SUPABASE_RLS_POLICIES.sql\n\nFor production deployment, apply this file to your Supabase project:\n1. Open your Supabase project dashboard.\n2. Go to SQL Editor.\n3. Paste and run the contents of SUPABASE_RLS_POLICIES.sql.\n\nThis enables Row-Level Security on all tables, ensuring:\n• Anonymous/unauthenticated requests cannot read any data.\n• Only the backend service-role key has full access.\n• The publishable (anon) key is restricted to the minimum necessary operations.\n\nNote: RLS must be applied before going live. Without it, anyone with your SUPABASE_URL and SUPABASE_KEY could read all data directly."
+    },
+    {
+        title: "35. Frequently Asked Questions",
+        category: "Troubleshooting",
+        content: "Q: Can I have the same faculty in multiple departments?\nA: No. Each faculty member belongs to one department. Use 'Visiting' professor type for cross-department faculty and assign them to courses manually.\n\nQ: Can a room be shared between departments?\nA: Yes. Leave 'Department Allocation' blank to make a room globally available, or assign it to a specific department.\n\nQ: What is the maximum timetable grid size?\nA: Default: 5 days × 8 periods (40 slots). This is configurable in the academic year settings.\n\nQ: Can I run multiple simultaneous timetable generations?\nA: No. Only one generation per department at a time is allowed. Concurrent requests return a conflict message.\n\nQ: How do I undo a generated timetable?\nA: Generate a new timetable — it overwrites the previous one for that department. There is no soft-undo.\n\nQ: Is the timetable stored in the cloud?\nA: Yes, in production mode (Supabase). In local mode (SQLite), it's stored in database/timetable.db.\n\nQ: How do I add a new semester?\nA: Update the Academic Year settings in the database (currently backend-only configuration)."
     }
 ];
+
 
 // Entity Specific Form Schemas
 const CRUD_SCHEMAS = {
@@ -2984,6 +3127,12 @@ async function globalRefresh() {
 
 // Inits
 window.onload = () => {
+    // Always require login — clear any leftover auth tokens from previous sessions
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_role");
+    state.token = null;
+    state.role = null;
+
     // Bind modal backdrop click close
     document.querySelectorAll(".modal").forEach(modal => {
         modal.addEventListener("click", (e) => {
@@ -2993,17 +3142,14 @@ window.onload = () => {
         });
     });
 
-    // Apply layout configuration settings
+    // Apply layout configuration settings (UI prefs persist across sessions)
     applySidebarState();
     applyUserThemeSetting(state.theme);
     applyThemeMode(state.themeMode || "light");
     toggleCompactModeSetting(state.compactMode);
 
-    if (state.token) {
-        navigateTo("dashboard");
-    } else {
-        navigateTo("landing");
-    }
+    // Always start at landing/login page
+    navigateTo("landing");
     loadSocials();
 };
 
