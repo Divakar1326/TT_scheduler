@@ -108,11 +108,16 @@ def parse_natural_rule():
         if warning_msg:
             parsed_json["warning"] = warning_msg
         return jsonify(parsed_json)
-    except Exception as e:
-        err_msg = str(e)
+    except json.JSONDecodeError:
         from config.config import logger
-        logger.error(f"Rule parsing failed: {err_msg}")
-        return jsonify({"error": err_msg}), 502
+        logger.error("Rule parsing failed: AI returned invalid JSON structure.")
+        return jsonify({"error": "The AI returned an invalid response. Please rephrase the rule and try again."}), 502
+    except Exception as e:
+        import uuid
+        from config.config import logger
+        req_id = str(uuid.uuid4())
+        logger.error(f"[{req_id}] Rule parsing failed: {e}")
+        return jsonify({"error": "AI rule translation failed. Please try again later.", "request_id": req_id}), 502
 
 
 @rules_bp.route("/rules/validate-structure", methods=["POST"])

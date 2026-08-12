@@ -31,11 +31,15 @@ def create_app() -> Flask:
     def handle_exception(e):
         import uuid
         import datetime
+        import logging
+        request_id = str(uuid.uuid4())
+        logging.getLogger("TT_Scheduler").error(
+            f"[{request_id}] Unhandled exception: {e}", exc_info=True
+        )
         return jsonify({
-            "friendly_message": "An unexpected server error occurred. Please contact system support.",
-            "developer_message": str(e),
-            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "request_id": str(uuid.uuid4())
+            "error": "An unexpected server error occurred. Please try again or contact support.",
+            "request_id": request_id,
+            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }), 500
         
     # Register blueprints

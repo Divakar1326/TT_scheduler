@@ -8,11 +8,8 @@ import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.repository.connection import DatabaseConnectionManager
 
-# Hardcoded demo credentials fallback/cache structure for quick token mapping
-TOKENS = {
-    "super-admin-token-12345": "SUPER_ADMIN",
-    "hod-token-12345": "HOD"
-}
+# Session token store — populated at runtime on login, never pre-seeded with static values.
+TOKENS = {}
 
 def initialize_users_db():
     """Seeds the users table if empty using hashed passwords, and ensures department HODs exist."""
@@ -77,12 +74,7 @@ def login():
     db_role = user["role"]
     app_role = "SUPER_ADMIN" if db_role == "ADMIN" else "HOD"
     
-    if username == "admin":
-        token = "super-admin-token-12345"
-    elif username == "hod":
-        token = "hod-token-12345"
-    else:
-        token = str(uuid.uuid4())
+    token = str(uuid.uuid4())
         
     session_data = {
         "username": username,
@@ -105,10 +97,11 @@ def get_current_user_session():
     if not token_data:
         return None
     if isinstance(token_data, str):
+        # Legacy string-only role entry (no longer produced by login, but handled for safety)
         return {
             "username": "unknown",
             "role": token_data,
-            "department_id": "AIDS" if token_data == "HOD" else None
+            "department_id": None
         }
     return token_data
 
@@ -212,15 +205,32 @@ def get_hods():
 
 @auth_bp.route("/reset-password", methods=["POST"])
 def reset_password():
-    """Allows HOD or Admin to reset their password."""
+    """Allows authenticated HOD or Admin to change their own password."""
+    # Must be authenticated
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Authentication required."}), 401
+    token = auth_header.split(" ")[1]
+    session = TOKENS.get(token)
+    if not session:
+        return jsonify({"error": "Invalid or expired token."}), 401
+    authenticated_user = session.get("username") if isinstance(session, dict) else None
+    if not authenticated_user:
+        return jsonify({"error": "Invalid session."}), 401
+
     data = request.get_json() or {}
     username = data.get("username")
     old_password = data.get("old_password")
     new_password = data.get("new_password")
-    
+
     if not username or not new_password:
         return jsonify({"error": "Username and new password are required."}), 400
-        
+
+    # Users may only change their own password (SUPER_ADMIN can change any)
+    session_role = session.get("role") if isinstance(session, dict) else None
+    if session_role != "SUPER_ADMIN" and authenticated_user != username:
+        return jsonify({"error": "You may only change your own password."}), 403
+
     conn, should_close = DatabaseConnectionManager.get_connection()
     try:
         cursor = conn.cursor()
@@ -228,15 +238,15 @@ def reset_password():
         user = cursor.fetchone()
         if not user:
             return jsonify({"error": "User not found."}), 404
-            
+
         if old_password:
             if not check_password_hash(user["password_hash"], old_password):
-                return jsonify({"error": "Invalid old password."}), 401
-                
+                return jsonify({"error": "Invalid current password."}), 401
+
         new_pwd_hash = generate_password_hash(new_password)
         cursor.execute("UPDATE users SET password_hash = ? WHERE username = ?", (new_pwd_hash, username))
         conn.commit()
-        return jsonify({"message": "Password reset successfully."})
+        return jsonify({"message": "Password updated successfully."})
     finally:
         if should_close:
             conn.close()

@@ -12,3 +12,12 @@ Thumbs.db
 node_modules/
 dist/
 build/
+logs/
+scratch/
+# Sensitive credential files - must never be committed
+CREDENTIALS.md
+# Personal/binary assets
+*.png
+*.pdf
+*.jpg
+*.jpeg

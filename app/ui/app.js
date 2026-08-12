@@ -371,6 +371,40 @@ async function requestAPI(url, method = "GET", body = null) {
     return promise;
 }
 
+/**
+ * Secure file download helper — sends Authorization header instead of URL param.
+ * Avoids token exposure in browser history, server logs, and referrer headers.
+ */
+async function _secureDownload(url, filename) {
+    showGlobalLoader();
+    try {
+        const response = await fetch(url, { headers: getHeaders() });
+        if (response.status === 401 || response.status === 403) {
+            showToast("Unauthorized. Please login again.", "error");
+            logout();
+            return;
+        }
+        if (!response.ok) {
+            let errMsg = "Export failed.";
+            try { const d = await response.json(); errMsg = d.error || errMsg; } catch (_) {}
+            showToast(errMsg, "error");
+            return;
+        }
+        const blob = await response.blob();
+        const objUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(objUrl), 10000);
+    } catch (err) {
+        showToast("Download failed. Please try again.", "error");
+    } finally {
+        hideGlobalLoader();
+    }
+}
 
 // Scroll to developer section on landing page
 function scrollToAbout() {
@@ -1167,9 +1201,9 @@ function viewSectionTimetableDirect(secId) {
     }, 200);
 }
 
-function downloadSectionExportDirect(secId, format) {
-    const token = state.token;
-    window.open(`/api/scheduler/export?type=section&id=${secId}&format=${format}&Authorization=Bearer ${token}`);
+async function downloadSectionExportDirect(secId, format) {
+    const url = `/api/scheduler/export?type=section&id=${encodeURIComponent(secId)}&format=${encodeURIComponent(format)}`;
+    await _secureDownload(url, `timetable_section_${secId}.${format}`);
 }
 
 // --- CRUD LOGIC MANAGER ---
@@ -2546,14 +2580,13 @@ async function viewRuleVersions(ruleId) {
 }
 
 // Generated Timetables Viewer Functions
-function downloadExport(format) {
+async function downloadTimetableExport(format) {
     const category = document.getElementById("viewer-category-select").value;
     const selectTarget = document.getElementById("viewer-target-select");
     const idVal = selectTarget.value;
     if (!idVal) return showToast("Please select a target first.", "error");
-
-    const token = state.token;
-    window.open(`/api/scheduler/export?type=${category}&id=${idVal}&format=${format}&Authorization=Bearer ${token}`);
+    const url = `/api/scheduler/export?type=${encodeURIComponent(category)}&id=${encodeURIComponent(idVal)}&format=${encodeURIComponent(format)}`;
+    await _secureDownload(url, `timetable_${category}_${idVal}.${format}`);
 }
 
 async function updateViewerIdOptions() {
@@ -2854,11 +2887,11 @@ async function renderFacultyGrid() {
     drawGridInContainer(container, "faculty", activeVal, metadata);
 }
 
-function downloadFacultyExport(format) {
+async function downloadFacultyExport(format) {
     const activeVal = document.getElementById("faculty-target-select").value;
     if (!activeVal) return showToast("Please select a faculty member first.", "error");
-    const token = state.token;
-    window.open(`/api/scheduler/export?type=faculty&id=${activeVal}&format=${format}&Authorization=Bearer ${token}`);
+    const url = `/api/scheduler/export?type=faculty&id=${encodeURIComponent(activeVal)}&format=${encodeURIComponent(format)}`;
+    await _secureDownload(url, `timetable_faculty_${activeVal}.${format}`);
 }
 
 // Lab Timetable Page logic
@@ -2913,11 +2946,11 @@ async function renderLabGrid() {
     drawGridInContainer(container, "lab", activeVal, metadata);
 }
 
-function downloadLabExport(format) {
+async function downloadLabExport(format) {
     const activeVal = document.getElementById("lab-target-select").value;
     if (!activeVal) return showToast("Please select a laboratory first.", "error");
-    const token = state.token;
-    window.open(`/api/scheduler/export?type=lab&id=${activeVal}&format=${format}&Authorization=Bearer ${token}`);
+    const url = `/api/scheduler/export?type=lab&id=${encodeURIComponent(activeVal)}&format=${encodeURIComponent(format)}`;
+    await _secureDownload(url, `timetable_lab_${activeVal}.${format}`);
 }
 
 // Modals controller

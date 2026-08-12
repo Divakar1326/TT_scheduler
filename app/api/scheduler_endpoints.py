@@ -345,9 +345,16 @@ def generate():
             yield emit(current_stage, 10)
             from app.auth.auth import get_current_user_session
             session = get_current_user_session()
-            department_id = req_data.get("department_id") or (
-                session.get("department_id") if session else None
-            )
+            session_role = session.get("role") if session else None
+            session_dept = session.get("department_id") if session else None
+
+            # HOD can ONLY generate their own department — session always wins.
+            # SUPER_ADMIN may specify any department via the request body.
+            if session_role == "HOD":
+                department_id = session_dept
+            else:
+                department_id = req_data.get("department_id") or session_dept
+
             target_section_id = req_data.get("section_id")
             if target_section_id and not department_id:
                 from app.repository.entity_repositories import SectionRepository
