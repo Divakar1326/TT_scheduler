@@ -1,0 +1,100 @@
+2026-08-09 23:36:20,795 - TT_Scheduler - INFO - [config.py:85] - Initializing environment configurations.
+2026-08-09 23:36:20,796 - TT_Scheduler - INFO - [config.py:86] - APP_ENV / FLASK_ENV: production
+2026-08-09 23:36:20,796 - TT_Scheduler - INFO - [config.py:87] - LOCAL_MODE: False
+2026-08-09 23:36:20,796 - TT_Scheduler - INFO - [config.py:88] - PORT: 8000
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:89] - DATABASE_PATH: database/timetable.db
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:90] - DATABASE_URL (Supabase): post...gres
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:91] - DATABASE_SCHEMA: public
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:92] - SUPABASE_URL: http...e.co
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:93] - SUPABASE_KEY: sb_p...ih8W
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:94] - SUPABASE_SERVICE_ROLE_KEY: sb_s...zk0X
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:95] - AI_PROVIDER (Primary): gemini
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:96] - OPENROUTER_MODEL: qwen/qwen3-coder:free
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:97] - GROQ_MODEL: 
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:98] - CEREBRAS_MODEL: 
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:99] - GEMINI_MODEL: gemini-3.5-flash
+2026-08-09 23:36:20,797 - TT_Scheduler - INFO - [config.py:100] - SECRET_KEY: supe...123!
+2026-08-09 23:36:20,912 - TT_Scheduler - INFO - [ai_service.py:34] - AI Service initialized with multi-provider fallback sequence.
+2026-08-09 23:36:20,915 - TT_Scheduler - INFO - [startup_validator.py:11] - Starting startup self-diagnostics.
+2026-08-09 23:36:20,945 - TT_Scheduler - INFO - [connection.py:114] - Initializing ThreadedConnectionPool for Supabase PostgreSQL (Attempt 1/3).
+2026-08-09 23:36:21,822 - TT_Scheduler - INFO - [connection.py:121] - Supabase PostgreSQL connection pool initialized successfully.
+2026-08-09 23:36:25,763 - TT_Scheduler - INFO - [startup_validator.py:111] - Auto-applied missing foreign key indexes.
+2026-08-09 23:36:26,228 - TT_Scheduler - INFO - [startup_validator.py:125] - Synchronized scheduler_run primary key sequence in PostgreSQL.
+2026-08-09 23:36:26,228 - TT_Scheduler - INFO - [startup_validator.py:139] - Production startup self-diagnostics completed successfully.
+2026-08-09 23:37:18,792 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Database connection'                    | T+0.000s
+2026-08-09 23:37:18,844 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Database connection'                    | 52.0ms
+2026-08-09 23:37:18,845 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading academic year'                  | T+0.053s
+2026-08-09 23:37:19,084 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading academic year'                  | 239.0ms | year=2026, semester=1
+2026-08-09 23:37:19,084 - TT_Scheduler - INFO - [scheduler_endpoints.py:326] - [PIPELINE] Academic year resolved: year=2026, semester=1
+2026-08-09 23:37:19,085 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading departments'                    | T+0.292s
+2026-08-09 23:37:19,086 - TT_Scheduler - INFO - [scheduler_endpoints.py:351] - [PIPELINE] Scheduling for department: 'ISC'
+2026-08-09 23:37:19,087 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading departments'                    | 1.0ms | dept='ISC'
+2026-08-09 23:37:19,087 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading sections'                       | T+0.294s
+2026-08-09 23:37:19,327 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading sections'                       | 239.0ms | total=6, dept=2
+2026-08-09 23:37:19,327 - TT_Scheduler - INFO - [scheduler_endpoints.py:363] - [PIPELINE] Sections: 2 in dept, 6 total
+2026-08-09 23:37:19,327 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading courses'                        | T+0.534s
+2026-08-09 23:37:19,569 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading courses'                        | 243.0ms | total=60
+2026-08-09 23:37:19,570 - TT_Scheduler - INFO - [scheduler_endpoints.py:373] - [PIPELINE] Courses loaded: 60
+2026-08-09 23:37:19,570 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading faculty'                        | T+0.778s
+2026-08-09 23:37:19,812 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading faculty'                        | 241.0ms | dept_faculty=13
+2026-08-09 23:37:19,812 - TT_Scheduler - INFO - [scheduler_endpoints.py:389] - [PIPELINE] Faculty: 13 available for dept
+2026-08-09 23:37:19,813 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading rooms'                          | T+1.020s
+2026-08-09 23:37:19,814 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading rooms'                          | 1.0ms | rooms=2
+2026-08-09 23:37:19,816 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading labs'                           | T+1.022s
+2026-08-09 23:37:19,816 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading labs'                           | 1.0ms | labs=3
+2026-08-09 23:37:19,817 - TT_Scheduler - INFO - [scheduler_endpoints.py:409] - [PIPELINE] Rooms=2, Labs=3
+2026-08-09 23:37:19,817 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading rules'                          | T+1.024s
+2026-08-09 23:37:21,981 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading rules'                          | 2165.0ms | ai_rules=5, template_slots=35
+2026-08-09 23:37:21,982 - TT_Scheduler - INFO - [scheduler_endpoints.py:419] - [PIPELINE] Constraint context built: 5 AI rules, 35 template slots, 5 working days
+2026-08-09 23:37:21,983 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading mappings'                       | T+3.191s
+2026-08-09 23:37:22,234 - TT_Scheduler - INFO - [scheduler_endpoints.py:433] - [PIPELINE] Faculty assignments loaded: 60 direct mappings
+2026-08-09 23:37:22,461 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading mappings'                       | 478.0ms | faculty_map=60, fac_course_map=0
+2026-08-09 23:37:22,462 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Validating input data'                  | T+3.670s
+2026-08-09 23:37:22,463 - TT_Scheduler - INFO - [input_validator.py:261] - [INPUT VALIDATOR] PRE-FLIGHT PASSED -- dept='ISC', sections=2, faculty=13, rooms=2, labs=3, warnings=0
+2026-08-09 23:37:22,464 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Validating input data'                  | 2.0ms | errors=0
+2026-08-09 23:37:22,464 - TT_Scheduler - INFO - [scheduler_endpoints.py:481] - [PIPELINE] OK PRE-FLIGHT PASSED -- proceeding to session build
+2026-08-09 23:37:22,465 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Building candidate slots'               | T+3.673s
+2026-08-09 23:37:22,465 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Building candidate slots'               | 0.0ms | sessions=58
+2026-08-09 23:37:22,466 - TT_Scheduler - INFO - [scheduler_endpoints.py:532] - [PIPELINE] Session list built: 58 sessions to schedule
+2026-08-09 23:37:22,466 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Loading existing allocations'           | T+3.674s
+2026-08-09 23:37:22,720 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Loading existing allocations'           | 254.0ms | existing_cross_dept=0
+2026-08-09 23:37:22,721 - TT_Scheduler - INFO - [scheduler_endpoints.py:592] - [PIPELINE] Cross-department existing allocations loaded: 0
+2026-08-09 23:37:22,721 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Running CSP solver'                     | T+3.929s
+2026-08-09 23:37:22,722 - TT_Scheduler - INFO - [scheduler_endpoints.py:599] - [PIPELINE] CSP solver started | sessions=58, rooms=2, labs=3, working_days=[1, 2, 3, 4, 5], template_slots=35
+2026-08-09 23:37:30,219 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Running CSP solver'                     | 7498.0ms | allocated=70, unscheduled=0, backtracks=23, nodes=82
+2026-08-09 23:37:30,220 - TT_Scheduler - INFO - [scheduler_endpoints.py:631] - [PIPELINE] CSP complete | allocated=70, unscheduled=0, backtracks=23, nodes_explored=82, duration=7.498s
+2026-08-09 23:37:30,221 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Repairing conflicts'                    | T+11.429s
+2026-08-09 23:37:32,939 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Repairing conflicts'                    | 2718.0ms | allocations_after_optimize=70
+2026-08-09 23:37:32,939 - TT_Scheduler - INFO - [scheduler_endpoints.py:649] - [PIPELINE] Soft optimization done | total_allocations=70
+2026-08-09 23:37:32,940 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Running validation'                     | T+14.148s
+2026-08-09 23:37:32,947 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Running validation'                     | 7.0ms | errors=0, warnings=0, hard=100.0%, soft=19.1%
+2026-08-09 23:37:32,948 - TT_Scheduler - INFO - [scheduler_endpoints.py:673] - [PIPELINE] Validation complete | errors=0, warnings=0, constraint_satisfaction=100.00%, soft_penalty=19.05%
+2026-08-09 23:37:32,948 - TT_Scheduler - INFO - [input_validator.py:33] - [PIPELINE] >> STAGE: 'Saving timetable'                       | T+14.156s
+2026-08-09 23:37:33,201 - TT_Scheduler - INFO - [scheduler_endpoints.py:726] - [PIPELINE] Created scheduler_run | run_id=58, dept='ISC', year=2026, semester=1
+2026-08-09 23:37:42,085 - TT_Scheduler - INFO - [input_validator.py:46] - [PIPELINE] DONE:   'Saving timetable'                       | 9137.0ms | run_id=58, inserted=70, penalty=126
+2026-08-09 23:37:42,085 - TT_Scheduler - INFO - [scheduler_endpoints.py:751] - [PIPELINE] Schedule persisted | run_id=58, rows_inserted=70, total_penalty=126, duration=14.158s
+2026-08-09 23:37:42,086 - TT_Scheduler - INFO - [input_validator.py:65] - 
+========================================================================
+PIPELINE EXECUTION SUMMARY
+========================================================================
+  Database connection                        52.0 ms  #
+  Loading academic year                     239.0 ms  #
+  Loading departments                         1.0 ms  #
+  Loading sections                          239.0 ms  #
+  Loading courses                           243.0 ms  #
+  Loading faculty                           241.0 ms  #
+  Loading rooms                               1.0 ms  #
+  Loading labs                                1.0 ms  #
+  Loading rules                            2165.0 ms  ###
+  Loading mappings                          478.0 ms  #
+  Validating input data                       2.0 ms  #
+  Building candidate slots                    0.0 ms  #
+  Loading existing allocations              254.0 ms  #
+  Running CSP solver                       7498.0 ms  ############
+  Repairing conflicts                      2718.0 ms  ####
+  Running validation                          7.0 ms  #
+  Saving timetable                         9137.0 ms  ###############
+------------------------------------------------------------------------
+  TOTAL                                   23276.0 ms
+========================================================================
+2026-08-09 23:37:42,087 - TT_Scheduler - INFO - [scheduler_endpoints.py:786] - [PIPELINE] OK SCHEDULING COMPLETE | dept='ISC', run_id=58, allocations=70, errors=0, hard=100.00%, soft=19.05%, total_time=23.295s

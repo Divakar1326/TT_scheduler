@@ -2,20 +2,25 @@
 from typing import Any, Dict, List, Optional
 from app.repository.base_repository import BaseRepository
 from app.repository.connection import DatabaseConnectionManager
-from app.models.mapping import ModelMapper
-from app.models.domain import (
+from app.core.mapping import ModelMapper
+from app.core.domain import (
     Department, Faculty, Room, Lab, Course, Section, Rule
 )
 
 class DepartmentRepository(BaseRepository):
+    _cache = None
+
     def insert_dept(self, dept_id: str, name: str) -> None:
         self.insert("department", {"department_id": dept_id, "department_name": name})
+        DepartmentRepository._cache = None
 
     def find_by_id(self, dept_id: str) -> Optional[Dict[str, Any]]:
         return self.find_one("department", {"department_id": dept_id})
 
     def get_all(self) -> List[Department]:
-        return [ModelMapper.to_department(row) for row in self.find_all("department")]
+        if DepartmentRepository._cache is None:
+            DepartmentRepository._cache = [ModelMapper.to_department(row) for row in self.find_all("department")]
+        return DepartmentRepository._cache
 
     def get_by_id(self, dept_id: str) -> Optional[Department]:
         row = self.find_by_id(dept_id)
@@ -23,13 +28,16 @@ class DepartmentRepository(BaseRepository):
 
     def add_entity(self, entity: Department) -> str:
         self.insert("department", ModelMapper.to_dict(entity))
+        DepartmentRepository._cache = None
         return entity.department_id
 
     def update_entity(self, entity: Department) -> None:
         super().update("department", {"department_id": entity.department_id}, ModelMapper.to_dict(entity))
+        DepartmentRepository._cache = None
 
     def delete_entity(self, dept_id: str) -> None:
         super().delete("department", {"department_id": dept_id})
+        DepartmentRepository._cache = None
 
 
 class FacultyRepository(BaseRepository):
@@ -64,18 +72,23 @@ class FacultyRepository(BaseRepository):
 
 
 class RoomRepository(BaseRepository):
+    _cache = None
+
     def insert_room(self, room_no: str, dept_id: str, capacity: int) -> None:
         self.insert("rooms", {
             "room_no": room_no,
             "department_id": dept_id,
             "capacity": capacity
         })
+        RoomRepository._cache = None
 
     def find_by_no(self, room_no: str) -> Optional[Dict[str, Any]]:
         return self.find_one("rooms", {"room_no": room_no})
 
     def get_all(self) -> List[Room]:
-        return [ModelMapper.to_room(row) for row in self.find_all("rooms")]
+        if RoomRepository._cache is None:
+            RoomRepository._cache = [ModelMapper.to_room(row) for row in self.find_all("rooms")]
+        return RoomRepository._cache
 
     def get_by_id(self, room_no: str) -> Optional[Room]:
         row = self.find_by_no(room_no)
@@ -83,16 +96,21 @@ class RoomRepository(BaseRepository):
 
     def add_entity(self, entity: Room) -> str:
         self.insert("rooms", ModelMapper.to_dict(entity))
+        RoomRepository._cache = None
         return entity.room_no
 
     def update_entity(self, entity: Room) -> None:
         super().update("rooms", {"room_no": entity.room_no}, ModelMapper.to_dict(entity))
+        RoomRepository._cache = None
 
     def delete_entity(self, room_no: str) -> None:
         super().delete("rooms", {"room_no": room_no})
+        RoomRepository._cache = None
 
 
 class LabRepository(BaseRepository):
+    _cache = None
+
     def insert_lab(self, lab_room_no: str, dept_id: str, name: str, capacity: int) -> None:
         self.insert("labs", {
             "lab_room_no": lab_room_no,
@@ -100,12 +118,15 @@ class LabRepository(BaseRepository):
             "lab_name": name,
             "capacity": capacity
         })
+        LabRepository._cache = None
 
     def find_by_no(self, lab_room_no: str) -> Optional[Dict[str, Any]]:
         return self.find_one("labs", {"lab_room_no": lab_room_no})
 
     def get_all(self) -> List[Lab]:
-        return [ModelMapper.to_lab(row) for row in self.find_all("labs")]
+        if LabRepository._cache is None:
+            LabRepository._cache = [ModelMapper.to_lab(row) for row in self.find_all("labs")]
+        return LabRepository._cache
 
     def get_by_id(self, lab_room_no: str) -> Optional[Lab]:
         row = self.find_by_no(lab_room_no)
@@ -113,13 +134,16 @@ class LabRepository(BaseRepository):
 
     def add_entity(self, entity: Lab) -> str:
         self.insert("labs", ModelMapper.to_dict(entity))
+        LabRepository._cache = None
         return entity.lab_room_no
 
     def update_entity(self, entity: Lab) -> None:
         super().update("labs", {"lab_room_no": entity.lab_room_no}, ModelMapper.to_dict(entity))
+        LabRepository._cache = None
 
     def delete_entity(self, lab_room_no: str) -> None:
         super().delete("labs", {"lab_room_no": lab_room_no})
+        LabRepository._cache = None
 
 
 class CourseRepository(BaseRepository):
@@ -142,11 +166,39 @@ class CourseRepository(BaseRepository):
         return self.find_one("courses", {"course_id": course_id})
 
     def get_all(self) -> List[Course]:
-        return [ModelMapper.to_course(row) for row in self.find_all("courses")]
+        import logging
+        logger = logging.getLogger("TT_Scheduler")
+        rows = self.find_all("courses")
+        courses = []
+        for row in rows:
+            if (row.get("l") or 0) == 0 and (row.get("t") or 0) == 0 and (row.get("p") or 0) == 0:
+                th = row.get("theory_hours") or 0
+                lh = row.get("lab_hours") or 0
+                if th > 0 or lh > 0:
+                    row["l"] = th
+                    row["t"] = 0
+                    row["p"] = lh
+                    logger.info(f"Self-healed database course {row['course_id']}: setting L={th}, T=0, P={lh}")
+                    self.update("courses", {"course_id": row["course_id"]}, row)
+            courses.append(ModelMapper.to_course(row))
+        return courses
 
     def get_by_id(self, course_id: str) -> Optional[Course]:
+        import logging
+        logger = logging.getLogger("TT_Scheduler")
         row = self.find_by_id(course_id)
-        return ModelMapper.to_course(row) if row else None
+        if row:
+            if (row.get("l") or 0) == 0 and (row.get("t") or 0) == 0 and (row.get("p") or 0) == 0:
+                th = row.get("theory_hours") or 0
+                lh = row.get("lab_hours") or 0
+                if th > 0 or lh > 0:
+                    row["l"] = th
+                    row["t"] = 0
+                    row["p"] = lh
+                    logger.info(f"Self-healed database course {row['course_id']}: setting L={th}, T=0, P={lh}")
+                    self.update("courses", {"course_id": row["course_id"]}, row)
+            return ModelMapper.to_course(row)
+        return None
 
     def add_entity(self, entity: Course) -> str:
         self.insert("courses", ModelMapper.to_dict(entity))
@@ -196,7 +248,7 @@ class RulesRepository(BaseRepository):
         self.insert("rules", {
             "rule_id": rule_id,
             "rule_name": name,
-            "description": desc,
+            "original_text": desc,
             "priority": priority,
             "type": rule_type,
             "parameter": parameter,
@@ -282,11 +334,108 @@ class ImportLogRepository(BaseRepository):
 
 
 class SchedulerRunRepository(BaseRepository):
-    pass
+    """Repository for scheduler_run table with proper SQLite/PostgreSQL compatibility."""
+
+    def create_run(self, year: int, semester: int, department_id: str, version: int = 1) -> int:
+        """Creates a new scheduler_run record and returns the generated run_id.
+
+        Uses RETURNING for PostgreSQL and lastrowid for SQLite.
+        """
+        from config.config import LOCAL_MODE
+        conn, should_close = DatabaseConnectionManager.get_connection(self.db_path)
+        try:
+            cursor = conn.cursor()
+            import datetime
+            started_at = datetime.datetime.utcnow().isoformat()
+            if LOCAL_MODE:
+                cursor.execute(
+                    """
+                    INSERT INTO scheduler_run (year, semester, department_id, version, status, started_at)
+                    VALUES (?, ?, ?, ?, 'RUNNING', ?)
+                    """,
+                    (year, semester, department_id, version, started_at)
+                )
+                run_id = cursor.lastrowid
+                conn.commit()
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO scheduler_run (year, semester, department_id, version, status, started_at)
+                    VALUES (%s, %s, %s, %s, 'RUNNING', %s)
+                    RETURNING run_id
+                    """,
+                    (year, semester, department_id, version, started_at)
+                )
+                row = cursor.fetchone()
+                run_id = row[0] if row else None
+                conn.commit()
+            return run_id
+        finally:
+            if should_close:
+                conn.close()
+
+    def update_run_status(
+        self,
+        run_id: int,
+        status: str,
+        total_penalty: int = 0,
+        duration_seconds: float = 0.0
+    ) -> None:
+        """Updates the status, penalty, and finish time of a scheduler run."""
+        import datetime
+        finished_at = datetime.datetime.utcnow().isoformat()
+        conn, should_close = DatabaseConnectionManager.get_connection(self.db_path)
+        try:
+            cursor = conn.cursor()
+            query = self._adjust_query(
+                """
+                UPDATE scheduler_run
+                SET status = ?, total_penalty = ?, finished_at = ?, duration_seconds = ?
+                WHERE run_id = ?
+                """
+            )
+            cursor.execute(query, (status, total_penalty, finished_at, duration_seconds, run_id))
+            conn.commit()
+        finally:
+            if should_close:
+                conn.close()
+
+    def get_latest_successful_run(self, year: int, semester: int, department_id: str) -> Optional[Dict[str, Any]]:
+        """Returns the most recent successful run for the given semester/department."""
+        conn, should_close = DatabaseConnectionManager.get_connection(self.db_path)
+        try:
+            cursor = conn.cursor()
+            query = self._adjust_query(
+                """
+                SELECT * FROM scheduler_run
+                WHERE status = 'SUCCESS' AND year = ? AND semester = ?
+                AND (department_id IS NULL OR department_id = ?)
+                ORDER BY run_id DESC LIMIT 1
+                """
+            )
+            cursor.execute(query, (year, semester, department_id))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+        finally:
+            if should_close:
+                conn.close()
+
+    def get_latest_run_id(self) -> Optional[int]:
+        """Returns the run_id of the most recent scheduler_run record."""
+        conn, should_close = DatabaseConnectionManager.get_connection(self.db_path)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT run_id FROM scheduler_run ORDER BY run_id DESC LIMIT 1")
+            row = cursor.fetchone()
+            return row[0] if row else None
+        finally:
+            if should_close:
+                conn.close()
 
 
 class ValidationLogRepository(BaseRepository):
     pass
+
 
 
 class ScheduleRepository(BaseRepository):
@@ -294,12 +443,13 @@ class ScheduleRepository(BaseRepository):
         """Queries for existing allocations that might conflict."""
         conn, should_close = DatabaseConnectionManager.get_connection(self.db_path)
         try:
-            cursor = conn.cursor()
             query = """
                 SELECT * FROM schedule 
                 WHERE run_id = ? AND day_id = ? AND period_no = ? 
                 AND (faculty_id = ? OR room_no = ? OR lab_room_no = ?)
             """
+            query = self._adjust_query(query)
+            cursor = conn.cursor()
             cursor.execute(query, (run_id, day_id, period_no, faculty_id, room_no, lab_room_no))
             rows = cursor.fetchall()
             return [dict(row) for row in rows]

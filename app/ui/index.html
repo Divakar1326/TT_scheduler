@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSched ERP — Enterprise University Schedule Generator</title>
+    <link rel="stylesheet" href="/style.css?v=3">
+</head>
+
+<body>
+
+    <!-- Ambient background -->
+    <div class="mesh-bg"></div>
+
+    <!-- Global Loading Overlay — shown by JS after 300ms for slow API calls -->
+    <div id="global-loading-overlay">
+        <div class="global-loader-card">
+            <div class="global-loader-spinner"></div>
+            <span class="global-loader-text">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Header bar -->
+    <header id="main-header">
+        <div class="header-left">
+            <button class="btn btn-secondary sidebar-toggle-btn-header" onclick="toggleSidebarCollapse()"
+                title="Toggle Sidebar"
+                style="padding: 0.5rem; margin-right: 0.75rem; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: var(--text-muted);">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            <span class="logo-icon">U</span>
+            <span class="logo-text">UniSched <span
+                    style="font-size: 0.75rem; color: var(--color-primary);">ERP</span></span>
+        </div>
+        <div class="header-right" style="display: flex; gap: 0.5rem; align-items: center;">
+            <button id="global-refresh-btn" class="btn btn-secondary" onclick="globalRefresh()"
+                style="display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                </svg>
+                <span>Refresh</span>
+            </button>
+            <!-- Guest Link Options -->
+            <div id="guest-nav" class="nav-links">
+                <button class="btn btn-primary" onclick="openLoginModal()">Login</button>
+            </div>
+            <!-- Authenticated User Menu -->
+            <div id="auth-nav" class="nav-links hidden" style="display: flex; gap: 0.5rem; align-items: center;">
+                <button id="nav-logout-btn" class="btn btn-secondary"
+                    style="color: var(--color-danger); border-color: rgba(220,38,38,0.2);" onclick="logout()">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+    <div class="accent-progress-bar"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside id="main-sidebar" class="hidden">
+            <div class="sidebar-title" id="sidebar-role-title">HOD Workspace</div>
+            <ul>
+                <li class="sidebar-section-header">ADMIN</li>
+                <li id="sidebar-dashboard" class="active"><a onclick="navigateTo('dashboard')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                        <span>Dashboard</span>
+                    </a></li>
+
+                <li class="sidebar-section-header">ACADEMIC</li>
+                <li id="sidebar-departments"><a onclick="navigateTo('departments')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <span>Departments</span>
+                    </a></li>
+                <li id="sidebar-faculty"><a onclick="navigateTo('faculty')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span>Faculty</span>
+                    </a></li>
+                <li id="sidebar-courses"><a onclick="navigateTo('courses')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <span>Courses</span>
+                    </a></li>
+                <li id="sidebar-sections"><a onclick="navigateTo('sections')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>Sections</span>
+                    </a></li>
+
+                <li class="sidebar-section-header">INFRASTRUCTURE</li>
+                <li id="sidebar-rooms"><a onclick="navigateTo('rooms')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10M9 21V12h6v9" />
+                        </svg>
+                        <span>Rooms</span>
+                    </a></li>
+                <li id="sidebar-laboratories"><a onclick="navigateTo('laboratories')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                        <span>Laboratories</span>
+                    </a></li>
+
+                <li class="sidebar-section-header">SCHEDULING</li>
+                <li id="sidebar-rules"><a onclick="navigateTo('rules')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span>Rules Builder</span>
+                    </a></li>
+                <li id="sidebar-generate-timetable"><a onclick="navigateTo('generate-timetable')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <span>Generate</span>
+                    </a></li>
+                <li id="sidebar-generated-timetables"><a onclick="navigateTo('generated-timetables')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Timetables</span>
+                    </a></li>
+                <li id="sidebar-faculty-timetable"><a onclick="navigateTo('faculty-timetable')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <span>Faculty View</span>
+                    </a></li>
+                <li id="sidebar-lab-timetable"><a onclick="navigateTo('lab-timetable')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                        <span>Lab View</span>
+                    </a></li>
+
+                <li class="sidebar-section-header">SYSTEM</li>
+                <li id="sidebar-settings"><a onclick="navigateTo('settings')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <span>Settings</span>
+                    </a></li>
+                <li id="sidebar-help"><a onclick="navigateTo('help')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path
+                                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Help & Guide</span>
+                    </a></li>
+                <li id="sidebar-about"><a onclick="navigateTo('about')">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>About Developer</span>
+                    </a></li>
+            </ul>
+
+        </aside>
+
+        <!-- Main Workspace Panel -->
+        <main class="main-wrapper">
+            <div class="container">
+
+                <!-- Universal Breadcrumbs -->
+                <div class="breadcrumb-container hidden" id="app-breadcrumbs">
+                    <span class="breadcrumb-item">Home</span>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-active" id="breadcrumb-current">Dashboard</span>
+                </div>
+
+                <!-- 1. LANDING PAGE (SPLIT HERO LAYOUT) -->
+                <section id="view-landing" class="view-section">
+                    <div class="landing-grid">
+                        <div class="landing-left">
+                            <h1
+                                style="color: var(--color-primary); font-size: 3.75rem; line-height: 1.2; margin-bottom: 2rem; font-weight: 800; letter-spacing: -0.02em;">
+                                University Timetable Automation ERP</h1>
+                            <p class="body-large"
+                                style="color: var(--text-muted); margin-bottom: 2rem; line-height: 1.7; font-size: 1.25rem;">
+                                Optimize your institutional workflow with UniSched. Powered by backtracking CSP
+                                constraint solvers, local search repair, and OpenRouter LLM compilation.
+                            </p>
+                            <ul class="landing-features-list" style="margin-bottom: 2rem; line-height: 1.8;">
+                                <li>Conflict-free generations</li>
+                                <li>Custom rules compiler</li>
+                                <li>Excel & PDF reporting</li>
+                                <li>Supabase cloud store</li>
+                            </ul>
+                        </div>
+                        <div class="landing-right" id="about-developer-landing">
+                            <!-- Developer widget card -->
+                            <div class="dev-profile-premium">
+                                <img src="/api/developer/photo?v=2"
+                                    style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; box-shadow: var(--shadow-sm);"
+                                    onerror="this.style.display='none'; document.getElementById('dev-avatar-main-fallback').style.display='flex';">
+                                <div id="dev-avatar-main-fallback"
+                                    style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary) 0%, #16a34a 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 2rem; box-shadow: var(--shadow-sm); display: none;">
+                                    D</div>
+                                <div class="dev-meta">
+                                    <h3>Divakar M</h3>
+                                    <p class="caption" style="font-weight: 600; color: var(--color-primary);">Lead
+                                        Developer & AI Architect</p>
+                                    <p style="font-size: 0.85rem; margin-top: 0.5rem;">Hindustan Institute of Technology
+                                        and Science</p>
+                                    <p style="font-size: 0.825rem; font-style: italic;">"Automating schedules, reducing
+                                        conflicts."</p>
+                                </div>
+                                <div class="dev-social-row">
+                                    <a id="dev-github-link" href="https://github.com" target="_blank"
+                                        class="btn btn-secondary"
+                                        style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">GitHub</a>
+                                    <a id="dev-linkedin-link" href="https://linkedin.com" target="_blank"
+                                        class="btn btn-secondary"
+                                        style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">LinkedIn</a>
+                                    <button class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;"
+                                        onclick="downloadResume()">About Me</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. SYSTEM DASHBOARD -->
+                <section id="view-dashboard" class="view-section hidden">
+                    <!-- HOD Dashboard Content -->
+                    <div id="hod-dashboard-content" class="role-dashboard-block">
+                        <div class="dashboard-details-header" style="margin-bottom: 2rem;">
+                            <div class="dept-details-info">
+                                <h2 class="dept-title-main">Hindustan Institute of Technology and Science</h2>
+                                <p class="dept-desc-sub">Department of Computer Science Engineering (AI & Data Science)
+                                </p>
+                            </div>
+                            <div class="hod-details-badge">
+                                HOD: <span id="hod-name-val">Dr. Rekha</span>
+                            </div>
+                        </div>
+
+                        <!-- Stats grid layout -->
+                        <div class="grid-stats grid-stats-3x3" style="margin-bottom: 2.5rem;">
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Total Faculty</h3>
+                                    <div class="value" id="stat-hod-faculty">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Total Courses</h3>
+                                    <div class="value" id="stat-hod-courses">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Classrooms</h3>
+                                    <div class="value" id="stat-hod-rooms">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Laboratories</h3>
+                                    <div class="value" id="stat-hod-labs">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Sections</h3>
+                                    <div class="value" id="stat-hod-sections">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Total Students</h3>
+                                    <div class="value" id="stat-hod-students">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Active Rules</h3>
+                                    <div class="value" id="stat-hod-rules">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Validation Status</h3>
+                                    <div class="value" id="stat-hod-validation"
+                                        style="font-size: 1.05rem; word-break: break-all;">N/A</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Section Scheduling</h3>
+                                    <div class="value" id="stat-hod-section-scheduling" style="font-size: 1.15rem;">0
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sections Table -->
+                        <div class="card">
+                            <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;">Section
+                                Scheduling Statuses</h3>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Section</th>
+                                            <th>Room Number</th>
+                                            <th>Class Teacher</th>
+                                            <th>Phone Number</th>
+                                            <th>Students Count</th>
+                                            <th>Generation Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hod-sections-tbody">
+                                        <!-- Dynamic sections -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Dashboard Content -->
+                    <div id="admin-dashboard-content" class="role-dashboard-block hidden">
+                        <div class="dashboard-details-header">
+                            <div class="dept-details-info">
+                                <h2 class="dept-title-main">Super Admin System Command Center</h2>
+                                <p class="dept-desc-sub">Configure university-wide departments, faculty directories,
+                                    templates, resources, and scheduling permissions.</p>
+                            </div>
+                            <div class="hod-details-badge">
+                                Role: <span>SYSTEM SUPER ADMIN</span>
+                            </div>
+                        </div>
+
+                        <div class="grid-stats" style="margin-bottom: 2.5rem;">
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2-2H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Total Departments</h3>
+                                    <div class="value" id="stat-admin-depts">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Active Faculty</h3>
+                                    <div class="value" id="stat-admin-faculty">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Total Courses</h3>
+                                    <div class="value" id="stat-admin-courses">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10M9 21V12h6v9" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Rooms Available</h3>
+                                    <div class="value" id="stat-admin-rooms">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Total Laboratories</h3>
+                                    <div class="value" id="stat-admin-labs">0</div>
+                                </div>
+                            </div>
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </div>
+                                <div class="kpi-content">
+                                    <h3>Active Rules</h3>
+                                    <div class="value" id="stat-admin-rules">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. UNIFIED CRUD PANEL (NO HEADER TITLE) -->
+                <section id="view-crud-manager" class="view-section hidden">
+                    <div class="crud-toolbar">
+                        <div class="crud-search-wrapper">
+                            <input type="text" id="crud-search-input" placeholder="Search records..."
+                                oninput="filterCRUDTable()">
+                        </div>
+                        <div class="crud-actions">
+                            <select id="crud-filter-select" onchange="filterCRUDTable()">
+                                <option value="">All Departments</option>
+                                <option value="ISC">ISC</option>
+                                <option value="CSE">CSE</option>
+                                <option value="ECE">ECE</option>
+                            </select>
+                            <!-- Redundant Refresh Button Removed -->
+                            <button class="btn btn-primary" onclick="openAddModal()">Add Record</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead id="crud-table-headers"></thead>
+                            <tbody id="crud-table-body"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 4. CONSTRAINT RULES BUILDER -->
+                <section id="view-rule-builder" class="view-section hidden">
+                    <div class="tab-container">
+                        <button id="tab-btn-structured" class="tab-btn active"
+                            onclick="switchRuleTab('structured')">Structured Rules</button>
+                        <button id="tab-btn-natural" class="tab-btn" onclick="switchRuleTab('natural')">AI Rule
+                            Builder</button>
+                    </div>
+
+                    <!-- Structured Form Builder -->
+                    <div id="tab-structured" class="rule-tab-content">
+                        <div class="card" style="max-width: 650px;">
+                            <form onsubmit="saveStructuredRule(event)">
+                                <div class="entity-form-grid">
+                                    <div class="form-group">
+                                        <label>Rule ID (slug)</label>
+                                        <input type="text" name="rule_id" placeholder="e.g. F01_no_p1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Rule Name</label>
+                                        <input type="text" name="rule_name" placeholder="e.g. Dr. Rekha avoids period 1"
+                                            required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Rule Type</label>
+                                        <select name="type">
+                                            <option value="HARD">HARD Constraint</option>
+                                            <option value="SOFT">SOFT Preference</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Priority</label>
+                                        <input type="number" name="priority" value="1" min="1" max="10" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Target Faculty (Optional)</label>
+                                        <input type="text" name="faculty_id" placeholder="e.g. F01">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Avoid Day (Optional)</label>
+                                        <select name="avoid_days">
+                                            <option value="">None</option>
+                                            <option value="1">Monday</option>
+                                            <option value="2">Tuesday</option>
+                                            <option value="3">Wednesday</option>
+                                            <option value="4">Thursday</option>
+                                            <option value="5">Friday</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save Structured
+                                    Rule</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- AI Rule Builder -->
+                    <div id="tab-natural" class="rule-tab-content hidden">
+                        <div class="card">
+                            <div class="form-group">
+                                <label>Describe the rule in Natural Language</label>
+                                <textarea id="natural-rule-text" rows="4"
+                                    placeholder="e.g. Dr. Rekha (F01) cannot teach on Friday after Period 4"></textarea>
+                            </div>
+                            <button id="ai-parse-btn" class="btn btn-primary" onclick="parseNaturalRule()">Parse with
+                                AI</button>
+
+                            <!-- AI Progress UI -->
+                            <div id="ai-rule-progress" class="hidden"
+                                style="margin-top: 1.25rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-base);">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <span id="ai-progress-stage"
+                                        style="font-size: 0.875rem; font-weight: 600; color: var(--color-primary);">Preparing...</span>
+                                    <span id="ai-progress-timer"
+                                        style="font-size: 0.8rem; color: var(--text-muted);">0.0s elapsed</span>
+                                </div>
+                                <div
+                                    style="width: 100%; height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden; margin-bottom: 0.75rem;">
+                                    <div id="ai-progress-bar"
+                                        style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-primary), #10b981); border-radius: 3px; transition: width 0.4s ease;">
+                                    </div>
+                                </div>
+                                <div id="ai-progress-info"
+                                    style="font-size: 0.78rem; color: var(--text-muted); font-style: italic;"></div>
+                            </div>
+
+                            <div style="margin-top: 1.5rem;">
+                                <strong class="caption" style="display: block; margin-bottom: 0.5rem;">Generated Rule
+                                    JSON Preview:</strong>
+                                <pre id="rule-preview-json"
+                                    style="background-color: var(--bg-base); padding: 1rem; border-radius: var(--radius-sm); font-family: monospace; font-size: 0.85rem; border: 1px solid var(--border-color); min-height: 100px; color: var(--text-main);"></pre>
+                            </div>
+                            <button id="ai-save-btn" class="btn btn-primary" style="margin-top: 1rem;"
+                                onclick="saveParsedRule()">Approve &amp; Save Rule</button>
+                        </div>
+                    </div>
+
+                    <!-- History Table -->
+                    <div class="card" style="margin-top: 2rem;">
+                        <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;">Active Custom Rules
+                        </h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Rule ID</th>
+                                        <th>Rule Name</th>
+                                        <th>Type</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rules-list-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. TIMETABLE GENERATION SOLVER -->
+                <section id="view-generate-timetable" class="view-section hidden">
+                    <div class="card" style="max-width: 600px; border-left: 4px solid var(--color-primary);">
+                        <div class="form-group">
+                            <label for="generate-scope-select">Generation Scope</label>
+                            <select id="generate-scope-select" onchange="toggleGenerateScope()">
+                                <option value="all">Entire Department</option>
+                                <option value="section">Specific Section</option>
+                            </select>
+                        </div>
+                        <!-- Department selector (admin only, shown when scope=all) -->
+                        <div class="form-group" id="generate-dept-group">
+                            <label for="generate-dept-select">Target Department</label>
+                            <select id="generate-dept-select">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group hidden" id="generate-section-group">
+                            <label for="generate-section-select">Select Section</label>
+                            <select id="generate-section-select">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <!-- Confirmation summary (shown before generate) -->
+                        <div id="generate-confirm-box" class="hidden"
+                            style="background:var(--bg-base); border:1px solid var(--border-color); border-left:4px solid var(--color-primary); border-radius:var(--radius-sm); padding:0.85rem 1rem; font-size:0.875rem; margin-bottom:0.5rem;">
+                            <strong style="display:block; margin-bottom:0.35rem; color:var(--text-main);">Generation
+                                Scope Summary</strong>
+                            <div id="generate-confirm-body" style="color:var(--text-muted); line-height:1.6;"></div>
+                        </div>
+                        <button class="btn btn-primary" onclick="executeGeneration()">Execute Solver</button>
+                    </div>
+
+                    <div class="card hidden" id="generation-results-card" style="margin-top: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 1rem;">Solver Output Log</h3>
+                        <div style="line-height: 2; font-size: 0.9rem;">
+                            <div><strong>Status:</strong> <span id="gen-status-val" style="font-weight: 700;">N/A</span>
+                            </div>
+                            <div><strong>Duration:</strong> <span id="gen-time-val">N/A</span></div>
+                            <div><strong>Validation Checks:</strong> <span id="gen-validation-val">N/A</span></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. GENERATED TIMETABLES VIEW GRID -->
+                <section id="view-generated-timetables" class="view-section hidden">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <select id="viewer-category-select" onchange="updateViewerIdOptions()" style="width: auto;">
+                                <option value="section">Section View</option>
+                                <option value="department">Department View</option>
+                            </select>
+                            <select id="viewer-target-select" onchange="renderViewerGrid()" style="width: auto;">
+                                <!-- Dynamic -->
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-secondary" onclick="downloadExport('html')">Print / PDF</button>
+                            <button class="btn btn-secondary" onclick="downloadExport('excel')">Excel</button>
+                            <button class="btn btn-secondary" onclick="downloadExport('csv')">CSV</button>
+                            <button class="btn btn-primary" onclick="openModal('validation-modal')">Verify
+                                Constraints</button>
+                        </div>
+                    </div>
+
+                    <!-- Metadata summary -->
+                    <div id="timetable-metadata-card" class="card hidden"
+                        style="border-left: 5px solid var(--color-primary);">
+                        <div id="tt-meta-univ-title"
+                            style="text-align: center; font-weight: 800; font-size: 1.25rem; margin-bottom: 0.25rem; color: var(--text-main); font-family: var(--font-heading);">
+                            Hindustan Institute of Technology and Science</div>
+                        <div id="tt-meta-dept-title"
+                            style="text-align: center; font-weight: 600; font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                            Department of Computer Science Engineering (AI & Data Science)</div>
+
+                        <div class="grid-stats"
+                            style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 0;">
+                            <div class="card"
+                                style="padding: 1rem; box-shadow: none; border-color: var(--border-color); background-color: var(--bg-base);">
+                                <h4
+                                    style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">
+                                    Allocation</h4>
+                                <div style="margin-top:0.5rem; font-size:0.85rem;">
+                                    <div style="margin-bottom: 0.25rem;"><strong>Semester:</strong> <span
+                                            id="tt-meta-semester">N/A</span></div>
+                                    <div style="margin-bottom: 0.25rem;"><strong>Classroom:</strong> <span
+                                            id="tt-meta-classroom">N/A</span></div>
+                                    <div><strong>Class Teacher:</strong> <span id="tt-meta-teacher">N/A</span></div>
+                                </div>
+                            </div>
+                            <div class="card"
+                                style="padding: 1rem; box-shadow: none; border-color: var(--border-color); background-color: var(--bg-base);">
+                                <h4
+                                    style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">
+                                    Metrics</h4>
+                                <div style="margin-top:0.5rem; font-size:0.85rem;">
+                                    <div style="margin-bottom: 0.25rem;"><strong>Run Version:</strong> <span
+                                            id="tt-meta-version">N/A</span></div>
+                                    <div style="margin-bottom: 0.25rem;"><strong>Date:</strong> <span
+                                            id="tt-meta-date">N/A</span></div>
+                                    <div><strong>Gen Time:</strong> <span id="tt-meta-gentime">N/A</span></div>
+                                </div>
+                            </div>
+                            <div class="card" id="tt-scores-card"
+                                style="padding: 1rem; box-shadow: none; border-color: var(--border-color); background-color: var(--color-success-light);">
+                                <h4
+                                    style="font-size:0.75rem; text-transform:uppercase; color:var(--color-success); font-weight:700;">
+                                    Scores</h4>
+                                <div style="margin-top:0.5rem; font-size:0.85rem;">
+                                    <div style="margin-bottom: 0.25rem;"><strong>Hard Status:</strong> <span
+                                            id="tt-meta-fitness"
+                                            style="font-weight:bold; color:var(--color-success);">N/A</span></div>
+                                    <div><strong>Soft Penalty:</strong> <span id="tt-meta-satisfaction"
+                                            style="font-weight:bold; color:var(--color-success);">N/A</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timetable cell layout container -->
+                    <div id="timetable-grid-container" style="margin-top: 1.5rem;"></div>
+                </section>
+
+                <!-- 7. FACULTY SCHEDULER VIEW -->
+                <section id="view-faculty-timetable" class="view-section hidden">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                        <div class="form-group" style="max-width: 300px; margin-bottom: 0;">
+                            <select id="faculty-target-select" onchange="renderFacultyGrid()" style="width: auto;">
+                                <!-- Dynamic -->
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" onclick="downloadFacultyExport('html')">Print /
+                                PDF</button>
+                            <button class="btn btn-secondary" onclick="downloadFacultyExport('excel')">Excel</button>
+                            <button class="btn btn-secondary" onclick="downloadFacultyExport('csv')">CSV</button>
+                        </div>
+                    </div>
+                    <div id="faculty-grid-container"></div>
+                </section>
+
+                <!-- 8. LABORATORY SCHEDULER VIEW -->
+                <section id="view-lab-timetable" class="view-section hidden">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                        <div class="form-group" style="max-width: 300px; margin-bottom: 0;">
+                            <select id="lab-target-select" onchange="renderLabGrid()" style="width: auto;">
+                                <!-- Dynamic -->
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-secondary" onclick="downloadLabExport('html')">Print / PDF</button>
+                            <button class="btn btn-secondary" onclick="downloadLabExport('excel')">Excel</button>
+                            <button class="btn btn-secondary" onclick="downloadLabExport('csv')">CSV</button>
+                        </div>
+                    </div>
+                    <div id="lab-grid-container"></div>
+                </section>
+
+                <!-- 9. SYSTEM SETTINGS -->
+                <section id="view-settings" class="view-section hidden">
+                    <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; align-items: start;">
+                        <div style="display: flex; flex-direction: column; gap: 2rem;">
+                            <div class="card">
+                                <h3 style="margin-bottom: 1.5rem; font-family: var(--font-heading);">Enterprise Visual
+                                    Settings</h3>
+
+                                <div class="form-group">
+                                    <label>System Color Theme</label>
+                                    <select id="setting-theme" onchange="applyUserThemeSetting(this.value)">
+                                        <option value="orange">Orange (UniSched Default)</option>
+                                        <option value="blue">Blue Corporate</option>
+                                        <option value="green">Green Environmental</option>
+                                        <option value="purple">Purple Creative</option>
+                                        <option value="red">Red Elegant</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Theme Mode (Future-Ready)</label>
+                                    <select id="setting-theme-mode" onchange="applyThemeMode(this.value)">
+                                        <option value="light">Enterprise Light Mode</option>
+                                        <option value="dark">Enterprise Dark Mode</option>
+                                        <option value="system">Follow Operating System Default</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Compact Display Density</label>
+                                    <select id="setting-compact" onchange="toggleCompactModeSetting(this.value)">
+                                        <option value="disabled">Standard Padding & Density</option>
+                                        <option value="enabled">Compact Mode overrides (High Density Tables)</option>
+                                    </select>
+                                </div>
+
+                                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                    <button class="btn btn-primary" onclick="saveSystemPreferences()">Save
+                                        Preferences</button>
+                                    <button class="btn btn-secondary" onclick="resetSystemPreferences()">Reset
+                                        Defaults</button>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="margin-bottom: 1.5rem; font-family: var(--font-heading);">Account Security &
+                                    Password Reset</h3>
+                                <form id="password-reset-form"
+                                    onsubmit="event.preventDefault(); executePasswordReset(this);">
+                                    <div class="form-group">
+                                        <label>Username</label>
+                                        <input type="text" name="username" placeholder="Enter username" required
+                                            style="width:100%; padding:0.6rem 0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Current Password</label>
+                                        <input type="password" name="old_password"
+                                            placeholder="Enter current password (if HOD)"
+                                            style="width:100%; padding:0.6rem 0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>New Password</label>
+                                        <input type="password" name="new_password" placeholder="Enter new password"
+                                            required
+                                            style="width:100%; padding:0.6rem 0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color);">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Update
+                                        Password</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Live Preview Card -->
+                        <div class="card"
+                            style="border-top: 4px solid var(--color-primary); display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                            <div>
+                                <h3 style="margin-bottom: 1rem; font-family: var(--font-heading);">Theme Live Preview
+                                </h3>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">See how
+                                    the primary colors and border radius values change in real time.</p>
+
+                                <div
+                                    style="padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background-color: var(--bg-base); margin-bottom: 1rem;">
+                                    <span class="logo-icon" style="margin-bottom: 0.5rem;">U</span>
+                                    <h4
+                                        style="color: var(--color-primary); font-family: var(--font-heading); margin-bottom: 0.25rem;">
+                                        Preview Card Header</h4>
+                                    <p style="font-size: 0.8rem; color: var(--text-muted);">Preview content showcasing
+                                        colors and button hover layouts.</p>
+                                </div>
+
+                                <button class="btn btn-primary" style="width: 100%; pointer-events: none;">Primary
+                                    Preview Button</button>
+                            </div>
+
+                            <div
+                                style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Supabase Connection:</span>
+                                    <span id="settings-supabase-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>AI Provider Status:</span>
+                                    <span id="settings-ai-status-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding-left: 0.75rem; font-size: 0.75rem;">
+                                    <span>- Inference Provider:</span>
+                                    <span id="settings-ai-provider-val">Loading...</span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding-left: 0.75rem; font-size: 0.75rem;">
+                                    <span>- Current Model:</span>
+                                    <span id="settings-ai-model-val" style="font-style: italic;">Loading...</span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding-left: 0.75rem; font-size: 0.75rem;">
+                                    <span>- Failover Status:</span>
+                                    <span id="settings-ai-fallback-val">Loading...</span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding-left: 0.75rem; font-size: 0.75rem;">
+                                    <span>- Avg Response Time:</span>
+                                    <span id="settings-ai-latency-val">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Database Version:</span>
+                                    <span id="settings-dbver-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>API Layer Version:</span>
+                                    <span id="settings-apiver-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Scheduler Engine:</span>
+                                    <span id="settings-schedver-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Environment Mode:</span>
+                                    <span id="settings-env-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Database Health:</span>
+                                    <span id="settings-dbhealth-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Total Tables:</span>
+                                    <span id="settings-tables-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Migration Status:</span>
+                                    <span id="settings-migration-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Validation Status:</span>
+                                    <span id="settings-validation-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-color); padding-top: 0.5rem;">
+                                    <span>Last Sync Timestamp:</span>
+                                    <span id="settings-sync-val" style="font-weight: bold;">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 10. HELP & DOCUMENTATION -->
+                <section id="view-help" class="view-section hidden">
+                    <div class="card" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                        <input type="text" id="help-search-input" placeholder="Search help topics..."
+                            oninput="filterHelpTopics(this.value)"
+                            style="flex: 1; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    </div>
+
+                    <div id="help-docs-container" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <!-- Populate dynamically in app.js -->
+                    </div>
+                </section>
+
+                <!-- 11. ABOUT DEVELOPER -->
+                <section id="view-about" class="view-section hidden"
+                    style="height: calc(100vh - 120px); overflow: hidden; display: flex; align-items: stretch; padding: 0.5rem 0;">
+                    <div class="about-hero-container"
+                        style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 310px 1fr; gap: 0rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); overflow: hidden; width: 100%; height: 100%;">
+                        <!-- Left Glassmorphic Sidebar (Static) -->
+                        <div class="about-sidebar"
+                            style="background: linear-gradient(180deg, rgba(var(--color-primary-rgb), 0.08) 0%, rgba(124, 58, 237, 0.04) 100%); border-right: 1px solid var(--border-color); padding: 1.5rem 1.5rem; display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%; justify-content: flex-start; overflow: hidden;">
+                            <div id="about-avatar-wrapper" style="margin-bottom: 1rem; position: relative;">
+                                <img src="/api/developer/photo?v=2" id="about-photo-img"
+                                    style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 4px solid var(--color-primary); box-shadow: var(--shadow-md);"
+                                    onerror="this.style.display='none'; document.getElementById('about-avatar-fallback').style.display='flex';">
+                                <div id="about-avatar-fallback"
+                                    style="width: 140px; height: 140px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary) 0%, #7c3aed 100%); color: white; display: none; align-items: center; justify-content: center; font-weight: 800; font-size: 3rem; box-shadow: var(--shadow-md); border: 4px solid var(--color-primary); font-family: var(--font-heading);">
+                                    D</div>
+                            </div>
+
+                            <h2
+                                style="font-family: var(--font-heading); font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">
+                                Divakar M</h2>
+                            <p
+                                style="color: var(--color-primary); font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                                Developer &amp; AI Architect</p>
+
+                            <div
+                                style="width: 100%; display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 1rem 0; margin-bottom: 1rem; text-align: left;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;"><span
+                                        style="font-size: 1.1rem;">&#127979;</span> <span>HITS University,
+                                        Chennai</span></div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;"><span
+                                        style="font-size: 1.1rem;">&#128222;</span> <span>+91 7812852449</span></div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;"><span
+                                        style="font-size: 1.1rem;">&#128231;</span> <span>diva132006@gmail.com</span>
+                                </div>
+                            </div>
+
+                            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.6rem;">
+                                <a id="about-github-link" href="https://github.com/Divakar1326" target="_blank"
+                                    class="btn btn-secondary"
+                                    style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;">&#128279;
+                                    GitHub</a>
+                                <a id="about-linkedin-link" href="https://www.linkedin.com/in/divakar1326/"
+                                    target="_blank" class="btn btn-secondary"
+                                    style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;">&#128279;
+                                    LinkedIn</a>
+                                <button class="btn btn-primary"
+                                    style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; padding: 0.5rem 1rem;"
+                                    onclick="downloadResume()">&#11019; Download Resume</button>
+                            </div>
+                        </div>
+
+                        <!-- Right Content Area -->
+                        <div class="about-content"
+                            style="padding: 2.5rem; display: flex; flex-direction: column; gap: 2rem; overflow-y: auto; height: 100%;">
+                            <!-- Summary -->
+                            <div>
+                                <h3
+                                    style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.75rem;">
+                                    Professional Summary</h3>
+                                <p
+                                    style="color: var(--text-muted); line-height: 1.6; font-size: 0.92rem; text-align: justify; margin: 0;">
+                                    Final-year B.Tech Artificial Intelligence &amp; Data Science student at Hindustan
+                                    Institute of Technology and Science, Chennai (2023 - 2027 | CGPA: 9.55). Possesses
+                                    developed expertise in Artificial Intelligence, Machine Learning, Generative AI, and
+                                    Data Science. Proven track record of applying technical concepts to real-world
+                                    problems and building intelligence-driven enterprise products, constraint
+                                    satisfaction engines (CSP), and AI agent workflows through multiple industry
+                                    internships.
+                                </p>
+                            </div>
+
+                            <!-- Grid for Skills & Experience -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                                <!-- Left: Skills -->
+                                <div>
+                                    <h3
+                                        style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.75rem;">
+                                        Technical Expertise</h3>
+                                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <div>
+                                            <span
+                                                style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Languages
+                                                &amp; Tools</span>
+                                            <div
+                                                style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem;">
+                                                <span class="about-skill-badge">Python</span>
+                                                <span class="about-skill-badge">C/C++</span>
+                                                <span class="about-skill-badge">SQL</span>
+                                                <span class="about-skill-badge">Git/GitHub</span>
+                                                <span class="about-skill-badge">REST APIs</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span
+                                                style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">AI
+                                                &amp; Generative Tech</span>
+                                            <div
+                                                style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem;">
+                                                <span class="about-skill-badge">LLM</span>
+                                                <span class="about-skill-badge">RAG</span>
+                                                <span class="about-skill-badge">GenAI</span>
+                                                <span class="about-skill-badge">NLP</span>
+                                                <span class="about-skill-badge">Prompt Engineering</span>
+                                                <span class="about-skill-badge">Langflow</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span
+                                                style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Libraries
+                                                &amp; Platforms</span>
+                                            <div
+                                                style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem;">
+                                                <span class="about-skill-badge">TensorFlow</span>
+                                                <span class="about-skill-badge">Scikit-Learn</span>
+                                                <span class="about-skill-badge">Pandas / NumPy</span>
+                                                <span class="about-skill-badge">Streamlit</span>
+                                                <span class="about-skill-badge">Supabase</span>
+                                                <span class="about-skill-badge">Antigravity</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Experience & Roles -->
+                                <div>
+                                    <h3
+                                        style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.75rem;">
+                                        Experience</h3>
+                                    <div
+                                        style="display: flex; flex-direction: column; gap: 1rem; border-left: 2px solid var(--border-color); padding-left: 0.75rem;">
+                                        <div>
+                                            <strong style="font-size: 0.85rem; color: var(--text-main);">Technical Lead
+                                                @ Blue Screen Club</strong>
+                                            <div
+                                                style="font-size: 0.75rem; color: var(--color-primary); margin-bottom: 0.2rem;">
+                                                Sep 2025 - Present | HITS</div>
+                                            <span style="font-size: 0.78rem; color: var(--text-muted);">Mentored 120+
+                                                students in Python, AI, and ML; organized coding hackathons.</span>
+                                        </div>
+                                        <div>
+                                            <strong style="font-size: 0.85rem; color: var(--text-main);">Generative AI
+                                                Intern @ Techobytes</strong>
+                                            <div
+                                                style="font-size: 0.75rem; color: var(--color-primary); margin-bottom: 0.2rem;">
+                                                Jun 2025 - Jul 2025 | Chennai</div>
+                                            <span style="font-size: 0.78rem; color: var(--text-muted);">Developed
+                                                GenAI-powered software prototypes &amp; applied REST API
+                                                engineering.</span>
+                                        </div>
+                                        <div>
+                                            <strong style="font-size: 0.85rem; color: var(--text-main);">AI Intern @
+                                                Imitate Labs</strong>
+                                            <div
+                                                style="font-size: 0.75rem; color: var(--color-primary); margin-bottom: 0.2rem;">
+                                                Oct 2025 - Nov 2025 | HITS</div>
+                                            <span style="font-size: 0.78rem; color: var(--text-muted);">Built AI video
+                                                intelligence features including scene detection &amp; content
+                                                tagging.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Projects -->
+                            <div>
+                                <h3
+                                    style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.75rem;">
+                                    Key Projects</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div
+                                        style="padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(var(--color-primary-rgb), 0.01);">
+                                        <strong style="font-size: 0.9rem; color: var(--text-main);">MURPH
+                                            (Ongoing)</strong>
+                                        <p
+                                            style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">
+                                            Multimodal AI emotional companion integrating text and facial emotion
+                                            recognition.</p>
+                                    </div>
+                                    <div
+                                        style="padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(var(--color-primary-rgb), 0.01);">
+                                        <strong style="font-size: 0.9rem; color: var(--text-main);">UniSched ERP
+                                            (Timetable Scheduler)</strong>
+                                        <p
+                                            style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">
+                                            Automated timetabling scheduler built on SQLite/PostgreSQL with backtracking
+                                            CSP and LLM parsing.</p>
+                                    </div>
+                                    <div
+                                        style="padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(var(--color-primary-rgb), 0.01);">
+                                        <strong style="font-size: 0.9rem; color: var(--text-main);">AmbuClear
+                                            System</strong>
+                                        <p
+                                            style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">
+                                            Intelligent ambulance clearance system with GPS route optimization and
+                                            Google Maps logic.</p>
+                                    </div>
+                                    <div
+                                        style="padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(var(--color-primary-rgb), 0.01);">
+                                        <strong style="font-size: 0.9rem; color: var(--text-main);">Multilingual
+                                            Translator App</strong>
+                                        <p
+                                            style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; margin-bottom: 0;">
+                                            Streamlit translator supporting 60+ languages with Whisper TTS and language
+                                            detection.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Form -->
+                            <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                                <h3
+                                    style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; color: var(--color-primary); margin-bottom: 0.75rem;">
+                                    Get In Touch</h3>
+                                <form id="contact-form" onsubmit="event.preventDefault(); submitContactForm(this);"
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <div class="form-group">
+                                            <label
+                                                style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">Name</label>
+                                            <input type="text" name="name" required placeholder="Your Name"
+                                                style="width: 100%; padding: 0.5rem 0.65rem; font-size: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main);">
+                                        </div>
+                                        <div class="form-group">
+                                            <label
+                                                style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">Email</label>
+                                            <input type="email" name="email" required
+                                                placeholder="your.email@example.com"
+                                                style="width: 100%; padding: 0.5rem 0.65rem; font-size: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main);">
+                                        </div>
+                                        <div class="form-group">
+                                            <label
+                                                style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">Phone</label>
+                                            <input type="tel" name="phone" required placeholder="Your Phone Number"
+                                                style="width: 100%; padding: 0.5rem 0.65rem; font-size: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main);">
+                                        </div>
+                                    </div>
+                                    <div
+                                        style="display: flex; flex-direction: column; justify-content: space-between; gap: 0.75rem;">
+                                        <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                                            <label
+                                                style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">Query
+                                                / Message</label>
+                                            <textarea name="message" required placeholder="How can I help you?" rows="5"
+                                                style="width: 100%; flex: 1; padding: 0.5rem 0.65rem; font-size: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); resize: none;"></textarea>
+                                        </div>
+                                        <button type="submit" id="contact-submit-btn" class="btn btn-primary"
+                                            style="width: 100%; padding: 0.6rem; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-sm);">Send
+                                            Message</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+            <!-- App Footer (inside .main-wrapper for natural sticky bottom alignment) -->
+            <footer id="app-footer"
+                style="display: none; padding: 0.6rem 2rem; text-align: center; justify-content: center; align-items: center; gap: 1rem; font-size: 0.875rem; color: var(--text-muted); flex-wrap: wrap; border-top: 1px solid var(--border-color); background: var(--bg-card); margin-top: auto;">
+                <span>Developed by <strong>Divakar M</strong></span>
+                <span>|</span>
+                <span
+                    style="cursor: pointer; text-decoration: underline; font-weight: 500; color: var(--color-primary);"
+                    onclick="navigateTo('about')">About Developer</span>
+            </footer>
+        </main>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <!-- MODAL: LOGIN -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3 class="modal-title">UniSched ERP Authentication</h3>
+                <button class="modal-close" onclick="closeModal('login-modal')">&times;</button>
+            </div>
+
+            <form onsubmit="event.preventDefault(); login(this.username.value, this.password.value);">
+                <div class="form-group">
+                    <label>Workspace Role</label>
+                    <select id="login-role-selector" onchange="handleLoginRoleSelect(this.value)">
+                        <option value="admin">System Super Admin</option>
+                        <option value="hod">Department HOD</option>
+                    </select>
+                </div>
+                <div class="form-group hidden" id="login-hod-dropdown-group">
+                    <label>Select Department</label>
+                    <select id="login-hod-profile-select" onchange="fillHODUsername(this.value)">
+                        <!-- Loaded dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" id="login-username-input" placeholder="e.g. admin" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                        <input type="password" name="password" id="login-password-input" placeholder="••••••••" required
+                            style="width: 100%; padding-right: 2.5rem;">
+                        <button type="button" onclick="togglePasswordVisibility('login-password-input', this)"
+                            style="position: absolute; right: 0.75rem; background: none; border: none; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; height: 100%; padding: 0;">
+                            <svg class="eye-open" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" viewBox="0 0 24 24" style="display: block;">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <svg class="eye-closed" width="18" height="18" fill="none" stroke="currentColor"
+                                stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" style="flex: 1;"
+                        onclick="closeModal('login-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;"
+                        id="auth-submit-btn">Authenticate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CONSTRAINTS REPORT -->
+    <div id="validation-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Verification Diagnosis Report</h3>
+                <button class="modal-close" onclick="closeModal('validation-modal')">&times;</button>
+            </div>
+            <div id="validation-report-results"
+                style="line-height: 1.6; font-size: 0.95rem; max-height: 450px; overflow-y: auto; padding-right: 0.5rem;">
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RULE VERSIONS HISTORY -->
+    <div id="versions-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Rule Version History</h3>
+                <button class="modal-close" onclick="closeModal('versions-modal')">&times;</button>
+            </div>
+            <ul id="versions-list" style="list-style: none; padding: 0; max-height: 480px; overflow-y: auto;"></ul>
+        </div>
+    </div>
+
+    <!-- MODAL: CRUD FORM -->
+    <div id="crud-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="crud-modal-title">Add/Edit Record</h3>
+                <button class="modal-close" onclick="closeModal('crud-modal')">&times;</button>
+            </div>
+            <form id="crud-entity-form" onsubmit="saveEntitySubmit(event)">
+                <div id="crud-form-fields-container" class="entity-form-grid"></div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">Save
+                    Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: DETAILED VIEW -->
+    <div id="details-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 750px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="details-modal-title">Record Details</h3>
+                <button class="modal-close" onclick="closeModal('details-modal')">&times;</button>
+            </div>
+            <div id="details-modal-body"
+                style="padding: 1.25rem 0; line-height: 1.6; font-size: 0.95rem; max-height: 500px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ABOUT DEVELOPER -->
+    <div id="developer-about-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 650px; padding: 2rem;">
+            <div class="modal-header">
+                <h3 class="modal-title">About Developer</h3>
+                <button class="modal-close" onclick="closeModal('developer-about-modal')">&times;</button>
+            </div>
+            <div style="display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                <img id="developer-photo-img" src="/api/developer/photo"
+                    style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; box-shadow: var(--shadow-sm);"
+                    onerror="this.style.display='none'; document.getElementById('developer-avatar-fallback').style.display='flex';">
+                <div id="developer-avatar-fallback"
+                    style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary) 0%, #16a34a 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 2rem; box-shadow: var(--shadow-sm); display: none;">
+                    D</div>
+                <div>
+                    <h3 style="font-family: var(--font-heading); margin-bottom: 0.25rem;">Divakar M</h3>
+                    <p style="color: var(--color-primary); font-weight: 600; font-size: 0.9rem;">Lead Developer & AI
+                        Architect</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Hindustan Institute of Technology and
+                        Science</p>
+                </div>
+            </div>
+            <div id="developer-markdown-content"
+                style="line-height: 1.6; font-size: 0.95rem; max-height: 400px; overflow-y: auto; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                Loading developer profile...
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SCHEDULER PROGRESS -->
+    <div id="progress-modal" class="modal hidden">
+        <div class="modal-content"
+            style="max-width: 600px; padding: 2rem; border-radius: 12px; background: var(--bg-card); box-shadow: var(--shadow-lg);">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                <h3 class="modal-title"
+                    style="font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--color-primary) 0%, #10b981 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Generating Academic Timetable</h3>
+            </div>
+
+            <div style="margin: 1.5rem 0;">
+                <div
+                    style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem; font-weight: 600;">
+                    <span id="progress-stage-name" style="color: var(--text-main);">Initializing...</span>
+                    <span id="progress-percentage-text" style="color: var(--color-primary);">0%</span>
+                </div>
+                <div
+                    style="width: 100%; height: 10px; background: var(--border-color); border-radius: 5px; overflow: hidden; position: relative;">
+                    <div id="progress-bar-fill"
+                        style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--color-primary) 0%, #10b981 100%); transition: width 0.3s ease; border-radius: 5px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics grid -->
+            <div
+                style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; background: var(--bg-base); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                <div>
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                        Elapsed Time</div>
+                    <div id="progress-elapsed" style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">
+                        0.0s</div>
+                </div>
+                <div>
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                        Estimated Remaining</div>
+                    <div id="progress-eta" style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">
+                        Calculating...</div>
+                </div>
+                <div>
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                        Classes Scheduled</div>
+                    <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);"><span
+                            id="progress-scheduled">0</span> / <span id="progress-total-classes">-</span></div>
+                </div>
+                <div>
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                        Remaining Classes</div>
+                    <div id="progress-remaining" style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">-
+                    </div>
+                </div>
+                <div>
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                        Hard Constraint Score</div>
+                    <div id="progress-hard-score" style="font-size: 1.1rem; font-weight: 700; color: #10b981;">100%
+                    </div>
+                </div>
+                <div>
+                    <div
+                        style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+                        Soft Penalty (Live)</div>
+                    <div id="progress-soft-penalty" style="font-size: 1.1rem; font-weight: 700; color: #f59e0b;">0%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Report area (hidden by default) -->
+            <div id="progress-error-container" class="hidden"
+                style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div
+                    style="color: #ef4444; font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"
+                        viewBox="0 0 24 24">
+                        <path
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>Generation Blocked / Failed</span>
+                </div>
+                <div style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">
+                    <strong>Failed Stage:</strong> <span id="progress-failed-stage">-</span>
+                </div>
+                <div style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">
+                    <strong>Root Cause:</strong> <span id="progress-failed-cause">-</span>
+                </div>
+                <div style="font-size: 0.85rem; background: var(--bg-base); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.75rem; font-family: monospace; white-space: pre-wrap; overflow-x: auto; max-height: 180px; margin-bottom: 0.75rem; color: var(--text-main);"
+                    id="progress-failed-exception"></div>
+                <div
+                    style="font-size: 0.9rem; border-top: 1px solid rgba(239, 68, 68, 0.2); padding-top: 0.75rem; color: var(--text-main);">
+                    <strong>Suggested Fix:</strong> <span id="progress-failed-fix" style="font-weight: 600;">-</span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button id="progress-cancel-btn" class="btn btn-secondary" onclick="closeModal('progress-modal')">Close
+                    Progress View</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js?v=3"></script>
+</body>
+
+</html>

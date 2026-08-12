@@ -1,12 +1,22 @@
 """Timetable state manager tracking occupancies, workloads, and busy slot grids."""
 from typing import Dict, List, Optional, Set, Tuple
-from app.models.domain import Schedule
+from app.core.domain import Schedule
 from app.scheduler.session import Session
 
 class SchedulingState:
     """Manages transactional state changes in the active timetable schedule."""
 
-    def __init__(self, remaining_sessions: Optional[List[Session]] = None):
+    def __init__(
+        self,
+        remaining_sessions: Optional[List[Session]] = None,
+        initial_allocations: Optional[List[Schedule]] = None,
+        year: int = 2026,
+        semester: int = 1
+    ):
+        # Academic year metadata — injected at construction, never hard-coded
+        self.year: int = year
+        self.semester: int = semester
+
         # Busy status sets for quick lookup
         self.faculty_busy: Set[Tuple[str, int, int]] = set()      # {(faculty_id, day_id, period_no)}
         self.room_busy: Set[Tuple[str, int, int]] = set()         # {(room_no, day_id, period_no)}
@@ -22,6 +32,19 @@ class SchedulingState:
         
         # Remaining scheduling backlog
         self.remaining_sessions: List[Session] = remaining_sessions if remaining_sessions is not None else []
+
+        if initial_allocations:
+            for s in initial_allocations:
+                self.allocations.append(s)
+                self.faculty_busy.add((s.faculty_id, s.day_id, s.period_no))
+                if s.room_no:
+                    self.room_busy.add((s.room_no, s.day_id, s.period_no))
+                if s.lab_room_no:
+                    self.lab_busy.add((s.lab_room_no, s.day_id, s.period_no))
+                self.section_busy.add((s.section_id, s.day_id, s.period_no))
+                
+                self.faculty_daily_count[(s.faculty_id, s.day_id)] = self.faculty_daily_count.get((s.faculty_id, s.day_id), 0) + 1
+                self.course_weekly_count[(s.section_id, s.course_id)] = self.course_weekly_count.get((s.section_id, s.course_id), 0) + 1
 
     def allocate(
         self,
@@ -48,8 +71,8 @@ class SchedulingState:
                 faculty_id=session.faculty_id,
                 room_no=room_no,
                 lab_room_no=lab_room_no,
-                year=2026,
-                semester=1
+                year=self.year,
+                semester=self.semester
             )
             # Add to placed list
             self.allocations.append(alloc)

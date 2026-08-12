@@ -2,6 +2,8 @@
 conftest.py - Shared Playwright fixtures, constants, and helpers for the QA test suite.
 """
 import os
+os.environ["LOCAL_MODE"] = "true"
+
 import json
 import time
 import pytest

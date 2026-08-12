@@ -48,18 +48,20 @@ project/
     timetable.db            # SQLite database file
     schema.sql              # Database schema definition
   app/
-    repository/             # Database connection, CRUD operations, transactions
-    models/                 # Dataclasses representing domain models
-    constraints/            # Core scheduling constraints & AI Rule Engine
-    scheduler/              # Candidate generation & backtracking scheduler
-    validator/              # Verification engine for completed timetables
-    repair/                 # Timetable repair and heuristics engine
-    exporter/               # PDF, CSV, Excel exporters
-    ai/                     # Gemini integration for natural language rules
-    api/                    # Flask REST API endpoints
+    core/                   # Domain models and basic types
+    repository/             # Connection manager & entity repositories
+    services/               # Repair engine and core scheduling helpers
+    validators/             # Hard/soft constraints and MasterValidator
+    exporters/              # Exporter functions (Excel/PDF/CSV)
+    auth/                   # Authentication logic and decorators
     ui/                     # HTML/CSS/JS frontend files
-    tests/                  # Unit and integration tests
+    api/                    # REST API endpoints and blueprint routes
+    ai/                     # Gemini AI translation logic
+  config/                   # Global configuration and path settings
   docs/                     # SRS, Specifications, and Blueprints
+  tests/                    # Test directory
+    unit/                   # Core unit & integration test suites
+  scripts/                  # Setup and database seeding utilities
 ```
 
 ## Database Information
@@ -92,7 +94,7 @@ project/
 - 100% test coverage for key scheduler logic
 
 ## Current Phase
-- Phase 0: Project Setup & Initialization
+- Phase X: Production Cleanup & Refactor (Project Feature-Complete and Production Ready)
 
 ## Constraints
 - **Hard Constraints:**

@@ -1,7 +1,6 @@
-"""Generic base repository for SQL operations on SQLite."""
-import sqlite3
+"""Generic base repository for SQL operations supporting both SQLite and PostgreSQL."""
 from typing import Any, Dict, List, Optional
-from config import DATABASE_PATH, logger
+from config.config import DATABASE_PATH, DATABASE_URL, LOCAL_MODE, logger
 from app.repository.connection import DatabaseConnectionManager
 
 class BaseRepository:
@@ -10,8 +9,14 @@ class BaseRepository:
     def __init__(self, db_path: str = DATABASE_PATH):
         self.db_path = db_path
 
+    def _adjust_query(self, query: str) -> str:
+        if not LOCAL_MODE:
+            return query.replace("?", "%s")
+        return query
+
     def _execute(self, query: str, params: tuple = ()) -> int:
         """Helper to execute query with proper connection management. Returns rowcount."""
+        query = self._adjust_query(query)
         conn, should_close = DatabaseConnectionManager.get_connection(self.db_path)
         try:
             cursor = conn.cursor()
@@ -19,14 +24,13 @@ class BaseRepository:
             cursor.execute(query, params)
             rowcount = cursor.rowcount
             return rowcount
-        except sqlite3.Error as e:
-            logger.error(f"SQLite error executing {query}: {e}")
+        except Exception as e:
+            logger.error(f"Error executing query {query}: {e}")
             raise e
         finally:
-            # Note: Do not close connection here if it's managed by transaction context
-            # We commit on success if should_close is True (standalone auto-commit behavior)
             if should_close:
-                conn.commit()
+                if LOCAL_MODE:
+                    conn.commit()
                 conn.close()
 
     def insert(self, table_name: str, data: Dict[str, Any]) -> None:
@@ -54,6 +58,7 @@ class BaseRepository:
         """Finds a single record matching the keys."""
         where_clause = " AND ".join([f"{col} = ?" for col in key_dict.keys()])
         query = f"SELECT * FROM {table_name} WHERE {where_clause} LIMIT 1"
+        query = self._adjust_query(query)
         
         conn, should_close = DatabaseConnectionManager.get_connection(self.db_path)
         try:
@@ -61,7 +66,7 @@ class BaseRepository:
             cursor.execute(query, tuple(key_dict.values()))
             row = cursor.fetchone()
             return dict(row) if row else None
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"Error finding one from {table_name}: {e}")
             raise e
         finally:
@@ -78,13 +83,14 @@ class BaseRepository:
             query = f"SELECT * FROM {table_name}"
             params = ()
             
+        query = self._adjust_query(query)
         conn, should_close = DatabaseConnectionManager.get_connection(self.db_path)
         try:
             cursor = conn.cursor()
             cursor.execute(query, params)
             rows = cursor.fetchall()
             return [dict(row) for row in rows]
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"Error finding all from {table_name}: {e}")
             raise e
         finally:

@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify
 from app.repository.entity_repositories import SectionRepository, RoomRepository, FacultyRepository
 from app.repository.connection import DatabaseConnectionManager
-from app.api.auth import require_role
+from app.auth.auth import require_role
 
 hod_bp = Blueprint("hod", __name__)
 sec_repo = SectionRepository()
@@ -16,8 +16,18 @@ def sections_status():
     try:
         cursor = conn.cursor()
         
+        from app.auth.auth import get_current_user_session
+        session = get_current_user_session()
+        scoped = False
+        s_dept = None
+        if session and session.get("role") == "HOD":
+            scoped = True
+            s_dept = session.get("department_id")
+
         # Get all sections
         sections = sec_repo.get_all()
+        if scoped:
+            sections = [s for s in sections if s.department_id.lower() == s_dept.lower()]
         
         # Get latest success run
         cursor.execute("SELECT run_id FROM scheduler_run WHERE status = 'SUCCESS' ORDER BY run_id DESC LIMIT 1")
