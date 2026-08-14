@@ -126,8 +126,7 @@ class CandidateGenerator:
                     temp_schedule = list(current_schedule)
 
                     for alloc in allocations:
-                        is_valid, _ = MasterValidator.validate_allocation(alloc, temp_schedule, context)
-                        if not is_valid:
+                        if not MasterValidator.validate_allocation_fast(alloc, temp_schedule, context):
                             block_valid = False
                             break
                         temp_schedule.append(alloc)

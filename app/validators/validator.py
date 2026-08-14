@@ -129,6 +129,91 @@ class MasterValidator:
         return is_valid, violations
 
     @staticmethod
+    def validate_allocation_fast(
+        allocation: Schedule, 
+        current_schedule: List[Schedule], 
+        context: ValidationContext
+    ) -> bool:
+        """
+        High-performance boolean validation for backtracking solver.
+        Returns True if valid, False if any hard constraint is violated.
+        """
+        if allocation.day_id not in context.working_days:
+            return False
+        if (allocation.day_id, allocation.period_no) not in context.template_slots:
+            return False
+        if (allocation.faculty_id, allocation.day_id, allocation.period_no) in context.faculty_unavailables:
+            return False
+
+        course = context.course_dict.get(allocation.course_id)
+        if not course:
+            return False
+
+        # LTP validation
+        if not check_ltp_validation(course):
+            return False
+
+        # Has Lab Validation
+        if not check_has_lab_validation(course, allocation):
+            return False
+
+        if allocation.lab_room_no and context.course_labs:
+            mapped_lab = context.course_labs.get(allocation.course_id)
+            if mapped_lab and allocation.lab_room_no != mapped_lab:
+                return False
+
+        # Classroom validation
+        if not check_permanent_classroom(allocation, context.room_sections):
+            return False
+
+        # Teacher validation
+        if not check_permanent_class_teacher(allocation, context.class_teachers, course):
+            return False
+
+        # Department Isolation
+        section_dept = context.section_depts.get(allocation.section_id)
+        course_depts = context.course_depts.get(allocation.course_id, [])
+        if not section_dept or not check_department_isolation(allocation, section_dept, course_depts):
+            return False
+
+        fac_count = 0
+        weekly_count = 0
+        limit = 6 if allocation.faculty_id.startswith("L") else 5
+        
+        ltp_total = course.l + course.t + course.p
+        weekly_cap = ltp_total if ltp_total > 0 else course.weekly_hours
+
+        for s in current_schedule:
+            # Clash checks
+            if s.day_id == allocation.day_id and s.period_no == allocation.period_no:
+                if s.faculty_id == allocation.faculty_id:
+                    return False
+                if s.section_id == allocation.section_id:
+                    return False
+                if allocation.room_no and s.room_no == allocation.room_no:
+                    return False
+                if allocation.lab_room_no and s.lab_room_no == allocation.lab_room_no:
+                    return False
+            
+            # Faculty daily limit
+            if s.faculty_id == allocation.faculty_id and s.day_id == allocation.day_id:
+                fac_count += 1
+                if fac_count >= limit:
+                    return False
+            
+            # Weekly limit
+            if s.section_id == allocation.section_id and s.course_id == allocation.course_id:
+                weekly_count += 1
+                if (weekly_count + 1) > weekly_cap:
+                    return False
+
+        if context.ai_rules:
+            if not check_ai_rule_validation(allocation, context.ai_rules, current_schedule, context):
+                return False
+
+        return True
+
+    @staticmethod
     def calculate_total_penalty(
         current_schedule: List[Schedule],
         context: ValidationContext

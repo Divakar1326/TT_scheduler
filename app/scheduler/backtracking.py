@@ -223,27 +223,28 @@ class BacktrackingSolver:
             self.stats.failed_allocations += 1
             return
 
-        # LCV: always compute scores for up to 5 neighbours
+        # LCV: compute scores for up to 2 neighbours if there are multiple choices
         other_sessions = [s for s in state.remaining_sessions if s.session_id != session.session_id]
         # Use year/semester from state (not hard-coded)
         _year = state.year
         _semester = state.semester
         lcv_scores: Dict = {}
-        for cand in candidates:
-            day, period, room = cand
-            temp_alloc = Schedule(
-                run_id=1, section_id=session.section_id, day_id=day, period_no=period,
-                course_id=session.course_id, faculty_id=session.faculty_id,
-                room_no=None if session.has_lab else room,
-                lab_room_no=room if session.has_lab else None,
-                year=_year, semester=_semester
-            )
-            temp_schedule = state.allocations + [temp_alloc]
-            choices_left = sum(
-                len(CandidateGenerator.get_valid_candidates(os, temp_schedule, context, rooms, labs))
-                for os in other_sessions[:5]
-            )
-            lcv_scores[cand] = choices_left
+        if len(candidates) > 1:
+            for cand in candidates:
+                day, period, room = cand
+                temp_alloc = Schedule(
+                    run_id=1, section_id=session.section_id, day_id=day, period_no=period,
+                    course_id=session.course_id, faculty_id=session.faculty_id,
+                    room_no=None if session.has_lab else room,
+                    lab_room_no=room if session.has_lab else None,
+                    year=_year, semester=_semester
+                )
+                temp_schedule = state.allocations + [temp_alloc]
+                choices_left = sum(
+                    len(CandidateGenerator.get_valid_candidates(os, temp_schedule, context, rooms, labs))
+                    for os in other_sessions[:2]
+                )
+                lcv_scores[cand] = choices_left
 
         def lcv_ranking_key(c):
             day, period, room = c

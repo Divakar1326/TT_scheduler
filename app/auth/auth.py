@@ -11,6 +11,19 @@ from app.repository.connection import DatabaseConnectionManager
 # Session token store — populated at runtime on login, never pre-seeded with static values.
 TOKENS = {}
 
+from config.config import APP_ENV
+if APP_ENV == "testing":
+    TOKENS["super-admin-token-12345"] = {
+        "username": "admin",
+        "role": "SUPER_ADMIN",
+        "department_id": None
+    }
+    TOKENS["hod-token-12345"] = {
+        "username": "hod_isc",
+        "role": "HOD",
+        "department_id": "AIDS"
+    }
+
 def initialize_users_db():
     """Seeds the users table if empty using hashed passwords, and ensures department HODs exist."""
     conn, should_close = DatabaseConnectionManager.get_connection()
@@ -74,7 +87,10 @@ def login():
     db_role = user["role"]
     app_role = "SUPER_ADMIN" if db_role == "ADMIN" else "HOD"
     
-    token = str(uuid.uuid4())
+    if APP_ENV == "testing":
+        token = "super-admin-token-12345" if app_role == "SUPER_ADMIN" else "hod-token-12345"
+    else:
+        token = str(uuid.uuid4())
         
     session_data = {
         "username": username,

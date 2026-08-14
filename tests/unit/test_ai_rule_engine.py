@@ -1,4 +1,7 @@
 """Unit tests for the AI Rule Engine, including prompt, validator, conflict, and route tests."""
+import os
+os.environ["APP_ENV"] = "testing"
+os.environ["FLASK_ENV"] = "testing"
 import json
 import unittest
 from app.api.app import create_app

@@ -874,7 +874,6 @@ def validate():
         crud_state = f"{len(room_repo.get_all())}_{len(lab_repo.get_all())}_{len(fac_repo.get_all())}"
         cache_key = f"val_{s_dept or 'ALL'}_{latest_run_id}_{len(MEM_SCHEDULE_STORE)}_{crud_state}"
         if cache_key in _VALIDATION_CACHE:
-            print("DIAGNOSTIC: Returning cached validation results!", flush=True)
             return jsonify(_VALIDATION_CACHE[cache_key])
 
     if schedule_payload is not None:
@@ -890,11 +889,7 @@ def validate():
         test_schedule = MEM_SCHEDULE_STORE
         
     if scoped:
-        test_schedule = [s for s in test_schedule if context.section_depts.get(s.section_id, "").lower() == s_dept.lower()]
-
-    print("DIAGNOSTIC: s_dept:", s_dept, flush=True)
-    print("DIAGNOSTIC: ai_rules:", context.ai_rules, flush=True)
-    print("DIAGNOSTIC: test_schedule len:", len(test_schedule), flush=True)
+        test_schedule = [s for s in test_schedule if context.section_depts.get(s.section_id, s_dept).lower() == s_dept.lower()]
 
     if not test_schedule:
         return jsonify({
@@ -903,12 +898,6 @@ def validate():
 
     report = TimetableValidator.validate_timetable(test_schedule, context, rooms_list, labs_list)
     res_dict = report.to_dict()
-    res_dict["diagnostic_rules"] = context.ai_rules
-    res_dict["diagnostic_schedule_len"] = len(test_schedule)
-    res_dict["diagnostic_schedule"] = [
-        {"section_id": s.section_id, "day_id": s.day_id, "period_no": s.period_no, "course_id": s.course_id, "lab_room_no": s.lab_room_no}
-        for s in test_schedule if s.period_no == 1
-    ]
     
     if cache_key:
         _VALIDATION_CACHE[cache_key] = res_dict
@@ -953,7 +942,7 @@ def repair():
         test_schedule = MEM_SCHEDULE_STORE
 
     if scoped:
-        test_schedule = [s for s in test_schedule if context.section_depts.get(s.section_id, "").lower() == s_dept.lower()]
+        test_schedule = [s for s in test_schedule if context.section_depts.get(s.section_id, s_dept).lower() == s_dept.lower()]
 
     if not test_schedule:
         return jsonify({

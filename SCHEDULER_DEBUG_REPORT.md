@@ -3,9 +3,9 @@
 **Status**: SUCCESS
 
 ## Metrics
-- Nodes Explored: 41
-- Backtracks: 11
-- Successful Allocations: 40
+- Nodes Explored: 30
+- Backtracks: 9
+- Successful Allocations: 29
 - Failed Allocations: 0
-- Max Search Depth: 30
+- Max Search Depth: 21
 

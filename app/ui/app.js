@@ -39,7 +39,9 @@ const _cache = {
     sections: { data: null, ts: 0 },
     rooms: { data: null, ts: 0 },
     laboratories: { data: null, ts: 0 },
-    settings: { data: null, ts: 0 }
+    settings: { data: null, ts: 0 },
+    stats: { data: null, ts: 0 },
+    hod_sections_status: { data: null, ts: 0 }
 };
 
 function isCacheValid(key) {
@@ -1165,7 +1167,13 @@ function animateCountUp(elementId, targetVal, duration = 1000) {
 // Dashboard Initializations
 async function loadAdminDashboard() {
     showSkeletons();
-    const stats = await requestAPI("/api/dashboard/stats");
+    let stats = getCache("stats");
+    if (!stats) {
+        stats = await requestAPI("/api/dashboard/stats");
+        if (stats) {
+            setCache("stats", stats);
+        }
+    }
 
     _stopSkeletonTicker();
     const statKeys = [
@@ -1292,9 +1300,15 @@ async function loadHODDashboard() {
             if (statusVal.startsWith("VALID")) {
                 valSpan.innerText = "VALID";
                 valSpan.style.color = "var(--color-success)";
+                valSpan.style.fontWeight = "700";
+            } else if (statusVal === "N/A" || !statusVal || statusVal.includes("NOT VALIDATED") || statusVal.includes("PENDING")) {
+                valSpan.innerText = "N/A";
+                valSpan.style.color = "var(--text-muted)";
+                valSpan.style.fontWeight = "500";
             } else {
                 valSpan.innerText = "ERROR";
                 valSpan.style.color = "var(--color-danger)";
+                valSpan.style.fontWeight = "700";
             }
         }
 
@@ -1387,7 +1401,6 @@ async function populateDepartmentFilters() {
 
 function changeCRUDEntity(entity) {
     state.crudEntity = entity;
-    clearEntityCache(entity);
     loadCRUDEntityList();
 }
 
@@ -1889,6 +1902,8 @@ function clearEntityCache(entity) {
     };
     const key = entityToKey[entity];
     if (key) invalidateCache(key);
+    invalidateCache("stats");
+    invalidateCache("hod_sections_status");
 }
 
 async function saveEntitySubmit(event) {

@@ -415,7 +415,6 @@ body.sidebar-collapsed .sidebar-title {
     display: flex;
     flex-direction: column;
     transition: margin-left var(--duration-normal) var(--ease-out);
-    padding-bottom: 45px; /* footer space */
 }
 
 body.sidebar-collapsed .main-wrapper {
@@ -967,6 +966,7 @@ tr:hover td {
 }
 
 .toast.success { border-left: 4px solid var(--color-success); }
+.toast.warning { border-left: 4px solid var(--color-warning); }
 .toast.error { border-left: 4px solid var(--color-danger); }
 
 /* --- ACCESSIBILITY FOCUS INDICATORS --- */
@@ -1436,17 +1436,7 @@ body.theme-mode-dark .multiselect-item {
     animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-#app-footer {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: var(--sidebar-width) !important;
-    right: 0 !important;
-    z-index: 80 !important;
-    transition: left var(--duration-normal) var(--ease-out) !important;
-}
-body.sidebar-collapsed #app-footer {
-    left: 76px !important;
-}
+/* Footer fixed styles removed for true sticky flexbox layout */
 
 /* Hide scrollbars on the redesigned About Developer inner content column */
 .about-content {
