@@ -33,7 +33,7 @@ def run_startup_checks():
         for err in errors:
             print(f" - {err}")
         logger.error(f"Startup check failed: Missing variables: {errors}")
-        sys.exit(1)
+        raise RuntimeError(f"Production Startup checks failed: {errors}")
 
     # 2. Database Connection & Schema checks
     try:
@@ -145,4 +145,4 @@ def run_startup_checks():
         print(" - DATABASE_URL / SUPABASE_URL values in .env")
         print(" - Supabase project status")
         logger.critical(f"Startup check failed with error: {str(e)}")
-        sys.exit(1)
+        raise RuntimeError(f"Connection check failed: {str(e)}")

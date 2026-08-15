@@ -8,11 +8,11 @@ from app.api.hod_endpoints import hod_bp
 
 from app.repository.startup_validator import run_startup_checks
 
+_has_run_checks = False
+
 def create_app() -> Flask:
     """Configures the Flask app and registers blueprints."""
-    # Run diagnostics self-check
-    run_startup_checks()
-    
+
     # Configure Flask to serve static files from app/static/ folder
     import os
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,6 +20,13 @@ def create_app() -> Flask:
     
     app = Flask(__name__, static_folder=static_folder, static_url_path="")
     app.config["JSON_SORT_KEYS"] = False
+    
+    @app.before_request
+    def check_startup():
+        global _has_run_checks
+        if not _has_run_checks:
+            run_startup_checks()
+            _has_run_checks = True
     
     # Root route serving index.html
     @app.route("/")
