@@ -112,8 +112,6 @@ def get_current_user_session():
     """Retrieves session dictionary for the current request."""
     from config.config import logger, APP_ENV, SECRET_KEY
     auth_header = request.headers.get("Authorization") or request.headers.get("X-Authorization")
-    if not auth_header:
-        auth_header = request.args.get("Authorization") or request.args.get("X-Authorization")
     
     logger.info(f"[AUTH DEBUG] APP_ENV: {APP_ENV}")
     logger.info(f"[AUTH DEBUG] Authorization header present: {auth_header is not None}")
