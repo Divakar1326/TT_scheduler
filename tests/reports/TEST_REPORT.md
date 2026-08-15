@@ -4,7 +4,7 @@
 | Test | Status | Duration |
 |------|--------|----------|
 | `tests/unit/test_ai_rule_engine.py::TestAIRuleEngine::test_duplication_and_contradiction` | ✅ PASSED | 0.02s |
-| `tests/unit/test_ai_rule_engine.py::TestAIRuleEngine::test_entity_existence_validation` | ✅ PASSED | 0.02s |
+| `tests/unit/test_ai_rule_engine.py::TestAIRuleEngine::test_entity_existence_validation` | ✅ PASSED | 0.03s |
 | `tests/unit/test_ai_rule_engine.py::TestAIRuleEngine::test_prompt_generation` | ✅ PASSED | 0.02s |
 | `tests/unit/test_ai_rule_engine.py::TestAIRuleEngine::test_rules_api_endpoints` | ✅ PASSED | 0.05s |
 | `tests/unit/test_api.py::TestBackendAPI::test_auth_route_protection` | ✅ PASSED | 0.02s |
@@ -36,13 +36,13 @@
 | `tests/unit/test_models.py::TestDomainModels::test_room_validation` | ✅ PASSED | 0.00s |
 | `tests/unit/test_models.py::TestDomainModels::test_rule_serialization_deserialization` | ✅ PASSED | 0.00s |
 | `tests/unit/test_models.py::TestDomainModels::test_section_validation` | ✅ PASSED | 0.00s |
-| `tests/unit/test_performance.py::TestSchedulerPerformance::test_backtracking_search_performance` | ✅ PASSED | 2.96s |
-| `tests/unit/test_repair.py::TestRepairEngine::test_consecutive_lab_repair` | ✅ PASSED | 0.02s |
+| `tests/unit/test_performance.py::TestSchedulerPerformance::test_backtracking_search_performance` | ✅ PASSED | 2.91s |
+| `tests/unit/test_repair.py::TestRepairEngine::test_consecutive_lab_repair` | ✅ PASSED | 0.01s |
 | `tests/unit/test_repair.py::TestRepairEngine::test_faculty_conflict_repair_by_moving` | ✅ PASSED | 0.01s |
-| `tests/unit/test_repository.py::TestRepositoryLayer::test_connection_sharing_in_transaction` | ✅ PASSED | 0.10s |
-| `tests/unit/test_repository.py::TestRepositoryLayer::test_generic_crud_operations` | ✅ PASSED | 0.10s |
-| `tests/unit/test_repository.py::TestRepositoryLayer::test_transaction_commit` | ✅ PASSED | 0.10s |
-| `tests/unit/test_repository.py::TestRepositoryLayer::test_transaction_rollback_on_error` | ✅ PASSED | 0.14s |
+| `tests/unit/test_repository.py::TestRepositoryLayer::test_connection_sharing_in_transaction` | ✅ PASSED | 0.08s |
+| `tests/unit/test_repository.py::TestRepositoryLayer::test_generic_crud_operations` | ✅ PASSED | 0.09s |
+| `tests/unit/test_repository.py::TestRepositoryLayer::test_transaction_commit` | ✅ PASSED | 0.08s |
+| `tests/unit/test_repository.py::TestRepositoryLayer::test_transaction_rollback_on_error` | ✅ PASSED | 0.08s |
 | `tests/unit/test_scheduler.py::TestScheduler::test_allocation_failure_on_empty_candidates` | ✅ PASSED | 0.00s |
 | `tests/unit/test_scheduler.py::TestScheduler::test_deallocate_practical_consecutive_rollback` | ✅ PASSED | 0.00s |
 | `tests/unit/test_scheduler.py::TestScheduler::test_deallocation_rollback` | ✅ PASSED | 0.00s |

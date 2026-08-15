@@ -3131,7 +3131,9 @@ async function globalRefresh() {
     
     // Invalidate both client and server caches
     invalidateCache();
-    await requestAPI("/api/system/clear-cache", "POST").catch(() => null);
+    if (state.token) {
+        await requestAPI("/api/system/clear-cache", "POST").catch(() => null);
+    }
     
     await navigateTo(state.currentPage);
 
