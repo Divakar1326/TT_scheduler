@@ -66,13 +66,13 @@ logger.addHandler(console_handler)
 # Rotating File Handler for production (Daily Timestamped Rotating files)
 from logging.handlers import TimedRotatingFileHandler
 log_dir = os.path.join(BASE_DIR, "logs")
-os.makedirs(log_dir, exist_ok=True)
-log_file_path = os.path.join(log_dir, "timetable_app.log")
 try:
+    os.makedirs(log_dir, exist_ok=True)
+    log_file_path = os.path.join(log_dir, "timetable_app.log")
     file_handler = TimedRotatingFileHandler(log_file_path, when="midnight", interval=1, backupCount=7)
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     logger.addHandler(file_handler)
-except Exception:
+except Exception as e:
     pass
 
 # Helper to mask secret variables
