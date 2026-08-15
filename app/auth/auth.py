@@ -137,6 +137,7 @@ def get_current_user_session():
     except Exception as e:
         from config.config import logger
         logger.error(f"Failed to decode session token: {e}")
+        print(f"[AUTH ERROR] Failed to decode session token: {e}. Token: {token[:20]}...", flush=True)
         return None
 
 
