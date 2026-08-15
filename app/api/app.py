@@ -28,9 +28,13 @@ def create_app() -> Flask:
             def __init__(self, wsgi_app):
                 self.wsgi_app = wsgi_app
             def __call__(self, environ, start_response):
-                path = environ.get('PATH_INFO', '')
-                if path and not path.startswith('/api'):
-                    environ['PATH_INFO'] = '/api' + path
+                x_forwarded_path = environ.get('HTTP_X_FORWARDED_PATH')
+                if x_forwarded_path:
+                    environ['PATH_INFO'] = x_forwarded_path
+                else:
+                    path = environ.get('PATH_INFO', '')
+                    if path and not path.startswith('/api'):
+                        environ['PATH_INFO'] = '/api' + path
                 return self.wsgi_app(environ, start_response)
         app.wsgi_app = VercelPathMiddleware(app.wsgi_app)
     
