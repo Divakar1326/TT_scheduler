@@ -21,6 +21,19 @@ def create_app() -> Flask:
     app = Flask(__name__, static_folder=static_folder, static_url_path="")
     app.config["JSON_SORT_KEYS"] = False
     
+    # Normalize path prefix under Vercel routing
+    from config.config import LOCAL_MODE
+    if not LOCAL_MODE:
+        class VercelPathMiddleware:
+            def __init__(self, wsgi_app):
+                self.wsgi_app = wsgi_app
+            def __call__(self, environ, start_response):
+                path = environ.get('PATH_INFO', '')
+                if path and not path.startswith('/api'):
+                    environ['PATH_INFO'] = '/api' + path
+                return self.wsgi_app(environ, start_response)
+        app.wsgi_app = VercelPathMiddleware(app.wsgi_app)
+    
     @app.before_request
     def check_startup():
         global _has_run_checks
