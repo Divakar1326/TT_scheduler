@@ -99,6 +99,8 @@ logger.info(f"CEREBRAS_MODEL: {CEREBRAS_MODEL}")
 logger.info(f"GEMINI_MODEL: {GEMINI_MODEL}")
 logger.info(f"SECRET_KEY: {mask_secret(SECRET_KEY)}")
 
+CONFIG_ERRORS = []
+
 # Production variables validation
 if not LOCAL_MODE:
     missing = []
@@ -113,6 +115,6 @@ if not LOCAL_MODE:
     
     if missing:
         error_msg = f"[ERROR] PRODUCTION CONFIGURATION ERROR: Missing required variables: {', '.join(missing)}. Or run with LOCAL_MODE=true for local SQLite development."
-        # Use ascii representation or print safely
         logger.error(error_msg)
-        raise ValueError(error_msg)
+        CONFIG_ERRORS = missing
+

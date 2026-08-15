@@ -24,6 +24,9 @@ def create_app() -> Flask:
     @app.before_request
     def check_startup():
         global _has_run_checks
+        from config.config import CONFIG_ERRORS
+        if CONFIG_ERRORS:
+            raise RuntimeError(f"Production Configuration Error: Missing required environment variables: {', '.join(CONFIG_ERRORS)}")
         if not _has_run_checks:
             run_startup_checks()
             _has_run_checks = True
