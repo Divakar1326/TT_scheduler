@@ -89,15 +89,22 @@ def login():
     
     if APP_ENV == "testing":
         token = "super-admin-token-12345" if app_role == "SUPER_ADMIN" else "hod-token-12345"
+        session_data = {
+            "username": username,
+            "role": app_role,
+            "department_id": user["department_id"] if user else None
+        }
+        TOKENS[token] = session_data
     else:
-        token = str(uuid.uuid4())
+        from config.config import SECRET_KEY
+        from itsdangerous import URLSafeSerializer
+        s = URLSafeSerializer(SECRET_KEY)
+        token = s.dumps({
+            "username": username,
+            "role": app_role,
+            "department_id": user["department_id"] if user else None
+        })
         
-    session_data = {
-        "username": username,
-        "role": app_role,
-        "department_id": user["department_id"] if user else None
-    }
-    TOKENS[token] = session_data
     return jsonify({"token": token, "role": app_role, "department_id": user["department_id"] if user else None})
 
 
@@ -109,17 +116,26 @@ def get_current_user_session():
     if not auth_header or not auth_header.startswith("Bearer "):
         return None
     token = auth_header.split(" ")[1]
-    token_data = TOKENS.get(token)
-    if not token_data:
+    
+    if APP_ENV == "testing":
+        token_data = TOKENS.get(token)
+        if not token_data:
+            return None
+        if isinstance(token_data, str):
+            return {
+                "username": "unknown",
+                "role": token_data,
+                "department_id": None
+            }
+        return token_data
+        
+    try:
+        from config.config import SECRET_KEY
+        from itsdangerous import URLSafeSerializer
+        s = URLSafeSerializer(SECRET_KEY)
+        return s.loads(token)
+    except Exception:
         return None
-    if isinstance(token_data, str):
-        # Legacy string-only role entry (no longer produced by login, but handled for safety)
-        return {
-            "username": "unknown",
-            "role": token_data,
-            "department_id": None
-        }
-    return token_data
 
 
 def require_role(role: str):
