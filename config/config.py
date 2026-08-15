@@ -40,12 +40,14 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
 SECRET_KEY = os.environ.get("JWT_SECRET") or os.environ.get("SECRET_KEY", "dev_secret_key_timetable_system_123!")
 APP_ENV = os.environ.get("APP_ENV") or os.environ.get("FLASK_ENV", "production").lower()
 FLASK_ENV = APP_ENV
-PORT = int(os.environ.get("PORT", 8000))
+port_env = os.environ.get("PORT")
+PORT = int(port_env) if port_env and port_env.strip().isdigit() else 8000
 GITHUB_URL = os.environ.get("GITHUB_URL", "https://github.com/Divakar1326")
 LINKEDIN_URL = os.environ.get("LINKEDIN_URL", "https://www.linkedin.com/in/divakar1326/")
 
 # Database timeout configurations
-DB_TIMEOUT_SECONDS = int(os.environ.get("DB_TIMEOUT_SECONDS", 10))
+timeout_env = os.environ.get("DB_TIMEOUT_SECONDS")
+DB_TIMEOUT_SECONDS = int(timeout_env) if timeout_env and timeout_env.strip().isdigit() else 10
 
 # Logging Configuration
 LOG_LEVEL_NAME = os.environ.get("LOG_LEVEL", "INFO").upper()
