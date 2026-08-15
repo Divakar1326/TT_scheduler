@@ -53,7 +53,8 @@ def create_app() -> Flask:
 
 from config.config import PORT, FLASK_ENV
 
+app = create_app()
+
 if __name__ == "__main__":
-    flask_app = create_app()
     debug_mode = (FLASK_ENV == "development")
-    flask_app.run(host="0.0.0.0", port=PORT, debug=debug_mode)
+    app.run(host="0.0.0.0", port=PORT, debug=debug_mode)

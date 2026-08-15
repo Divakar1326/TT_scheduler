@@ -1,3 +1,3 @@
-from app.api.app import create_app
+from app.api.app import app
 
-app = create_app()
+handler = app
