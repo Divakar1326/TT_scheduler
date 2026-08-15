@@ -22,26 +22,7 @@ def create_app() -> Flask:
     app.config["JSON_SORT_KEYS"] = False
     
     # Normalize path prefix under Vercel routing
-    from config.config import LOCAL_MODE
-    if not LOCAL_MODE:
-        class VercelPathMiddleware:
-            def __init__(self, wsgi_app):
-                self.wsgi_app = wsgi_app
-            def __call__(self, environ, start_response):
-                raw_uri = environ.get('REQUEST_URI') or environ.get('HTTP_X_FORWARDED_URI')
-                if raw_uri:
-                    original_path = raw_uri.split('?')[0]
-                    environ['PATH_INFO'] = original_path
-                else:
-                    x_forwarded_path = environ.get('HTTP_X_FORWARDED_PATH')
-                    if x_forwarded_path:
-                        environ['PATH_INFO'] = x_forwarded_path
-                    else:
-                        path = environ.get('PATH_INFO', '')
-                        if path and not path.startswith('/api'):
-                            environ['PATH_INFO'] = '/api' + path
-                return self.wsgi_app(environ, start_response)
-        app.wsgi_app = VercelPathMiddleware(app.wsgi_app)
+    # (Removed VercelPathMiddleware because vercel.json uses builds and routes which preserve PATH_INFO natively)
     
     @app.before_request
     def check_startup():
