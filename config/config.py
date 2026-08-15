@@ -37,7 +37,7 @@ CEREBRAS_MODEL = os.environ.get("CEREBRAS_MODEL", "llama3.1-8b")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
 
-SECRET_KEY = os.environ.get("JWT_SECRET") or os.environ.get("SECRET_KEY", "dev_secret_key_timetable_system_123!")
+SECRET_KEY = (os.environ.get("JWT_SECRET") or "dev_secret_key_timetable_system_123!").strip().strip("'\"")
 APP_ENV = os.environ.get("APP_ENV") or os.environ.get("FLASK_ENV", "production").lower()
 FLASK_ENV = APP_ENV
 port_env = os.environ.get("PORT")
@@ -89,17 +89,12 @@ logger.info(f"APP_ENV / FLASK_ENV: {APP_ENV}")
 logger.info(f"LOCAL_MODE: {LOCAL_MODE}")
 logger.info(f"PORT: {PORT}")
 logger.info(f"DATABASE_PATH: {DATABASE_PATH}")
-logger.info(f"DATABASE_URL (Supabase): {mask_secret(DATABASE_URL)}")
 logger.info(f"DATABASE_SCHEMA: {DATABASE_SCHEMA}")
-logger.info(f"SUPABASE_URL: {mask_secret(SUPABASE_URL)}")
-logger.info(f"SUPABASE_KEY: {mask_secret(SUPABASE_KEY)}")
-logger.info(f"SUPABASE_SERVICE_ROLE_KEY: {mask_secret(SUPABASE_SERVICE_ROLE_KEY)}")
 logger.info(f"AI_PROVIDER (Primary): {AI_PROVIDER}")
 logger.info(f"OPENROUTER_MODEL: {OPENROUTER_MODEL}")
 logger.info(f"GROQ_MODEL: {GROQ_MODEL}")
 logger.info(f"CEREBRAS_MODEL: {CEREBRAS_MODEL}")
 logger.info(f"GEMINI_MODEL: {GEMINI_MODEL}")
-logger.info(f"SECRET_KEY: {mask_secret(SECRET_KEY)}")
 
 CONFIG_ERRORS = []
 
@@ -112,8 +107,8 @@ if not LOCAL_MODE:
         missing.append("SUPABASE_URL")
     if not SUPABASE_KEY:
         missing.append("SUPABASE_KEY")
-    if not SECRET_KEY or SECRET_KEY == "dev_secret_key_timetable_system_123!":
-        missing.append("JWT_SECRET / SECRET_KEY (Production requires secure JWT secret)")
+    if not os.environ.get("JWT_SECRET") or os.environ.get("JWT_SECRET") == "dev_secret_key_timetable_system_123!":
+        missing.append("JWT_SECRET (Production requires secure JWT_SECRET environment variable)")
     
     if missing:
         error_msg = f"[ERROR] PRODUCTION CONFIGURATION ERROR: Missing required variables: {', '.join(missing)}. Or run with LOCAL_MODE=true for local SQLite development."

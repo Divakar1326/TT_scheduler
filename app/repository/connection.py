@@ -146,7 +146,16 @@ class DatabaseConnectionManager:
                 cur.close()
             except Exception:
                 logger.warning("Pooled PostgreSQL connection health check failed. Recreating...")
-                self._pool.putconn(conn, close=True)
+                try:
+                    if hasattr(self._pool, "_rused") and id(conn) in self._pool._rused:
+                        self._pool.putconn(conn, close=True)
+                    else:
+                        conn.close()
+                except Exception:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
                 conn = self._pool.getconn()
             return conn
         except Exception as e:
@@ -157,7 +166,15 @@ class DatabaseConnectionManager:
 
     def release_connection(self, conn):
         if not LOCAL_MODE and self._pool and conn:
+            # Unpack wrapper if passed
+            if hasattr(conn, "_conn"):
+                conn = conn._conn
+                if conn is None:
+                    return
             try:
+                # Avoid trying to put back a connection that is not currently tracked by the pool
+                if hasattr(self._pool, "_rused") and id(conn) not in self._pool._rused:
+                    return
                 self._pool.putconn(conn)
             except Exception as e:
                 logger.warning(f"Error returning connection to pool: {str(e)}")

@@ -423,6 +423,7 @@ function getHeaders(extra = {}) {
     };
     if (state.token) {
         headers["Authorization"] = `Bearer ${state.token}`;
+        headers["X-Authorization"] = `Bearer ${state.token}`;
     }
     return headers;
 }
@@ -3142,11 +3143,10 @@ async function globalRefresh() {
 
 // Inits
 window.onload = () => {
-    // Always require login — clear any leftover auth tokens from previous sessions
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_role");
-    state.token = null;
-    state.role = null;
+    // Restore session from localStorage if present to prevent logout on refresh
+    state.token = localStorage.getItem("auth_token") || null;
+    state.role = localStorage.getItem("auth_role") || null;
+    state.selectedDept = localStorage.getItem("auth_dept") || "ISC";
 
     // Bind modal backdrop click close
     document.querySelectorAll(".modal").forEach(modal => {
@@ -3163,8 +3163,12 @@ window.onload = () => {
     applyThemeMode(state.themeMode || "light");
     toggleCompactModeSetting(state.compactMode);
 
-    // Always start at landing/login page
-    navigateTo("landing");
+    // Route to dashboard if already authenticated, else landing page
+    if (state.token) {
+        navigateTo("dashboard");
+    } else {
+        navigateTo("landing");
+    }
     loadSocials();
 };
 

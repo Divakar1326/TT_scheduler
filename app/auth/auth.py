@@ -110,16 +110,31 @@ def login():
 
 def get_current_user_session():
     """Retrieves session dictionary for the current request."""
-    auth_header = request.headers.get("Authorization")
+    from config.config import logger, APP_ENV, SECRET_KEY
+    auth_header = request.headers.get("Authorization") or request.headers.get("X-Authorization")
     if not auth_header:
-        auth_header = request.args.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+        auth_header = request.args.get("Authorization") or request.args.get("X-Authorization")
+    
+    logger.info(f"[AUTH DEBUG] APP_ENV: {APP_ENV}")
+    logger.info(f"[AUTH DEBUG] Authorization header present: {auth_header is not None}")
+    if auth_header:
+        logger.info(f"[AUTH DEBUG] Authorization header starts with Bearer: {auth_header.startswith('Bearer ')}")
+        
+    if not auth_header:
+        logger.warning("[AUTH DEBUG] Missing Authorization/X-Authorization header.")
         return None
-    token = auth_header.split(" ")[1]
+    
+    parts = auth_header.split()
+    if len(parts) < 2 or parts[0].lower() != "bearer":
+        logger.warning("[AUTH DEBUG] Malformed Authorization header.")
+        return None
+    token = parts[1]
     
     if APP_ENV == "testing":
+        logger.info("[AUTH DEBUG] testing mode path, reading from TOKENS dict")
         token_data = TOKENS.get(token)
         if not token_data:
+            logger.warning("[AUTH DEBUG] Token not found in TOKENS dict")
             return None
         if isinstance(token_data, str):
             return {
@@ -130,13 +145,13 @@ def get_current_user_session():
         return token_data
         
     try:
-        from config.config import SECRET_KEY, logger
         from itsdangerous import URLSafeSerializer
         s = URLSafeSerializer(SECRET_KEY)
-        return s.loads(token)
+        session_data = s.loads(token)
+        logger.info("[AUTH DEBUG] Token successfully validated and decoded.")
+        return session_data
     except Exception as e:
-        from config.config import logger
-        logger.error(f"Failed to decode session token: {e}")
+        logger.error(f"[AUTH DEBUG] Failed to decode session token. Error: {str(e)} (Type: {type(e).__name__})")
         print(f"[AUTH ERROR] Failed to decode session token: {e}. Token: {token[:20]}...", flush=True)
         return None
 
@@ -146,19 +161,11 @@ def require_role(role: str):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            auth_header = request.headers.get("Authorization")
-            if not auth_header:
-                auth_header = request.args.get("Authorization")
-            if not auth_header or not auth_header.startswith("Bearer "):
-                return jsonify({"error": "Missing token"}), 401
+            session = get_current_user_session()
+            if not session:
+                return jsonify({"error": "Invalid or missing token"}), 401
                 
-            token = auth_header.split(" ")[1]
-            token_data = TOKENS.get(token)
-            
-            if not token_data:
-                return jsonify({"error": "Invalid token"}), 401
-                
-            token_role = token_data if isinstance(token_data, str) else token_data.get("role")
+            token_role = session.get("role")
             
             if role == "SUPER_ADMIN" and token_role != "SUPER_ADMIN":
                 return jsonify({"error": "Unauthorized"}), 403
@@ -242,11 +249,7 @@ def get_hods():
 def reset_password():
     """Allows authenticated HOD or Admin to change their own password."""
     # Must be authenticated
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Authentication required."}), 401
-    token = auth_header.split(" ")[1]
-    session = TOKENS.get(token)
+    session = get_current_user_session()
     if not session:
         return jsonify({"error": "Invalid or expired token."}), 401
     authenticated_user = session.get("username") if isinstance(session, dict) else None
