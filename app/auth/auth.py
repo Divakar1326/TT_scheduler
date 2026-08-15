@@ -130,11 +130,13 @@ def get_current_user_session():
         return token_data
         
     try:
-        from config.config import SECRET_KEY
+        from config.config import SECRET_KEY, logger
         from itsdangerous import URLSafeSerializer
         s = URLSafeSerializer(SECRET_KEY)
         return s.loads(token)
-    except Exception:
+    except Exception as e:
+        from config.config import logger
+        logger.error(f"Failed to decode session token: {e}")
         return None
 
 
