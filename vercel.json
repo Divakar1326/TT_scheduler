@@ -6,8 +6,36 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/app.js",
+      "destination": "/app/ui/app.js"
+    },
+    {
+      "source": "/style.css",
+      "destination": "/app/ui/style.css"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/app/ui/favicon.ico"
+    },
+    {
+      "source": "/favicon.svg",
+      "destination": "/app/ui/favicon.svg"
+    },
+    {
+      "source": "/apple-touch-icon.png",
+      "destination": "/app/ui/apple-touch-icon.png"
+    },
+    {
+      "source": "/favicon-96x96.png",
+      "destination": "/app/ui/favicon-96x96.png"
+    },
+    {
+      "source": "/site.webmanifest",
+      "destination": "/app/ui/site.webmanifest"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/api/index.py"
+      "destination": "/app/ui/index.html"
     }
   ]
 }

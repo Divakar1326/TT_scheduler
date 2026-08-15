@@ -57,18 +57,16 @@ def create_app() -> Flask:
     @app.route("/")
     def index():
         return app.send_static_file("index.html")
-        
-    # Vercel entrypoint health routes
-    @app.route("/api/index.py")
-    @app.route("/api/index")
-    @app.route("/index.py")
-    @app.route("/index")
-    def vercel_entrypoint_health():
-        return jsonify({"status": "healthy", "entrypoint": "active"}), 200
     
     # Global exception handler
     @app.errorhandler(Exception)
     def handle_exception(e):
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return jsonify({
+                "error": e.description
+            }), e.code
+            
         import uuid
         import datetime
         import logging
