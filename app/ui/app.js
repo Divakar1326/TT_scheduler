@@ -7,16 +7,16 @@ const state = {
     token: null,          // Always start unauthenticated — login required on every session
     role: null,
     currentPage: "landing",
-    selectedDept: localStorage.getItem("auth_dept") || "ISC",
+    selectedDept: sessionStorage.getItem("auth_dept") || "ISC",
     timetableData: [],
     crudEntity: "faculties", // Current CRUD entity being managed
     crudData: [],
     ruleTab: "structured",
     timetableSubPage: "generate",
-    theme: localStorage.getItem("ui_theme") || "orange",
-    themeMode: localStorage.getItem("ui_theme_mode") || "light",
-    compactMode: localStorage.getItem("ui_compact") || "disabled",
-    sidebarCollapsed: localStorage.getItem("ui_sidebar_collapsed") === "true",
+    theme: sessionStorage.getItem("ui_theme") || "orange",
+    themeMode: sessionStorage.getItem("ui_theme_mode") || "light",
+    compactMode: sessionStorage.getItem("ui_compact") || "disabled",
+    sidebarCollapsed: sessionStorage.getItem("ui_sidebar_collapsed") === null ? true : sessionStorage.getItem("ui_sidebar_collapsed") === "true",
     // Legacy cache references (kept for compatibility, use cache object below)
     departmentsCache: null,
     facultiesCache: null,
@@ -672,7 +672,7 @@ function quickFillLogin(username, password) {
 // Collapsible Sidebar Functions
 function toggleSidebarCollapse() {
     state.sidebarCollapsed = !state.sidebarCollapsed;
-    localStorage.setItem("ui_sidebar_collapsed", state.sidebarCollapsed);
+    sessionStorage.setItem("ui_sidebar_collapsed", state.sidebarCollapsed);
     applySidebarState();
 }
 
@@ -688,7 +688,7 @@ function applySidebarState() {
 /// Settings theme application
 function applyUserThemeSetting(theme) {
     state.theme = theme;
-    localStorage.setItem("ui_theme", theme);
+    sessionStorage.setItem("ui_theme", theme);
 
     // Reset theme classes
     document.body.classList.remove("theme-blue", "theme-green", "theme-purple", "theme-red");
@@ -699,7 +699,7 @@ function applyUserThemeSetting(theme) {
 
 function applyThemeMode(mode) {
     state.themeMode = mode;
-    localStorage.setItem("ui_theme_mode", mode);
+    sessionStorage.setItem("ui_theme_mode", mode);
 
     document.body.classList.remove("theme-mode-light", "theme-mode-dark");
     if (mode === "dark") {
@@ -714,7 +714,7 @@ function applyThemeMode(mode) {
 
 function toggleCompactModeSetting(mode) {
     state.compactMode = mode;
-    localStorage.setItem("ui_compact", mode);
+    sessionStorage.setItem("ui_compact", mode);
 
     if (mode === "enabled") {
         document.body.classList.add("compact-mode");
@@ -1047,9 +1047,9 @@ async function login(username, password) {
         state.token = data.token;
         state.role = data.role;
         state.selectedDept = data.department_id || "ISC";
-        localStorage.setItem("auth_token", data.token);
-        localStorage.setItem("auth_role", data.role);
-        localStorage.setItem("auth_dept", state.selectedDept);
+        sessionStorage.setItem("auth_token", data.token);
+        sessionStorage.setItem("auth_role", data.role);
+        sessionStorage.setItem("auth_dept", state.selectedDept);
         // Invalidate all caches on fresh login (stale data from previous session)
         invalidateCache(null);
         closeModal("login-modal");
@@ -1069,9 +1069,9 @@ async function login(username, password) {
 function logout() {
     state.token = null;
     state.role = null;
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_role");
-    localStorage.removeItem("auth_dept");
+    sessionStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_role");
+    sessionStorage.removeItem("auth_dept");
     navigateTo("landing");
 }
 
@@ -3145,10 +3145,10 @@ async function globalRefresh() {
 
 // Inits
 window.onload = () => {
-    // Restore session from localStorage if present to prevent logout on refresh
-    state.token = localStorage.getItem("auth_token") || null;
-    state.role = localStorage.getItem("auth_role") || null;
-    state.selectedDept = localStorage.getItem("auth_dept") || "ISC";
+    // Restore session from sessionStorage if present to prevent logout on refresh
+    state.token = sessionStorage.getItem("auth_token") || null;
+    state.role = sessionStorage.getItem("auth_role") || null;
+    state.selectedDept = sessionStorage.getItem("auth_dept") || "ISC";
 
     // Bind modal backdrop click close
     document.querySelectorAll(".modal").forEach(modal => {
@@ -3170,6 +3170,7 @@ window.onload = () => {
         navigateTo("dashboard");
     } else {
         navigateTo("landing");
+        openLoginModal();
     }
     loadSocials();
 };

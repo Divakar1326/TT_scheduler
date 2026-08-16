@@ -170,6 +170,8 @@ def admin_page(page):
     page.evaluate(f"""
         localStorage.setItem('auth_token', '{ADMIN_TOKEN}');
         localStorage.setItem('auth_role', 'SUPER_ADMIN');
+        sessionStorage.setItem('auth_token', '{ADMIN_TOKEN}');
+        sessionStorage.setItem('auth_role', 'SUPER_ADMIN');
     """)
     page.reload()
     page.wait_for_selector("#view-admin-dashboard:not(.hidden)", timeout=10000)
@@ -183,6 +185,8 @@ def hod_page(page):
     page.evaluate(f"""
         localStorage.setItem('auth_token', '{HOD_TOKEN}');
         localStorage.setItem('auth_role', 'HOD');
+        sessionStorage.setItem('auth_token', '{HOD_TOKEN}');
+        sessionStorage.setItem('auth_role', 'HOD');
     """)
     page.reload()
     page.wait_for_selector("#view-hod-dashboard:not(.hidden)", timeout=10000)
